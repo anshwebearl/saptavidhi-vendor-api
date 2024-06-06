@@ -3,51 +3,51 @@ import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { Vendor } from "../models/vendor.model.js";
 
-const registerVendorAdmin = async (req, res) => {
-    try {
-        const { username, password } = req.body;
+// const registerVendorAdmin = async (req, res) => {
+//     try {
+//         const { username, password } = req.body;
 
-        if ([username, password].some((x) => x === "")) {
-            return res.status(400).json({
-                success: false,
-                status: 400,
-                message: "all fields are compulsory",
-            });
-        }
+//         if ([username, password].some((x) => x === "")) {
+//             return res.status(400).json({
+//                 success: false,
+//                 status: 400,
+//                 message: "all fields are compulsory",
+//             });
+//         }
 
-        const existingVendorAdmin = await VendorAdmin.findOne({ username });
+//         const existingVendorAdmin = await VendorAdmin.findOne({ username });
 
-        if (existingVendorAdmin) {
-            return res.status(409).json({
-                success: false,
-                status: 409,
-                message: "admin with the given username already exists",
-            });
-        }
+//         if (existingVendorAdmin) {
+//             return res.status(409).json({
+//                 success: false,
+//                 status: 409,
+//                 message: "admin with the given username already exists",
+//             });
+//         }
 
-        const encryptedPassword = await bcrypt.hash(password, 10);
-        const vendorAdmin = await VendorAdmin.create({
-            username,
-            password: encryptedPassword,
-        });
+//         const encryptedPassword = await bcrypt.hash(password, 10);
+//         const vendorAdmin = await VendorAdmin.create({
+//             username,
+//             password: encryptedPassword,
+//         });
 
-        const token = await generateToken(vendorAdmin._id);
-        return res
-            .status(201)
-            .cookie("token", token, { httpOnly: true, secure: true })
-            .json({
-                token: token,
-                status: 201,
-                success: true,
-            });
-    } catch (error) {
-        return res.status(404).json({
-            status: 404,
-            success: false,
-            message: error,
-        });
-    }
-};
+//         const token = await generateToken(vendorAdmin._id);
+//         return res
+//             .status(201)
+//             .cookie("token", token, { httpOnly: true, secure: true })
+//             .json({
+//                 token: token,
+//                 status: 201,
+//                 success: true,
+//             });
+//     } catch (error) {
+//         return res.status(404).json({
+//             status: 404,
+//             success: false,
+//             message: error,
+//         });
+//     }
+// };
 
 const loginVendorAdmin = async (req, res) => {
     const { username, password } = req.body;
@@ -173,7 +173,7 @@ const getVendors = async (req, res) => {
 };
 
 export {
-    registerVendorAdmin,
+    // registerVendorAdmin,
     changeAdminPassword,
     loginVendorAdmin,
     getVendors,

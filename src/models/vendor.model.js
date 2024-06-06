@@ -46,6 +46,30 @@ const vendorSchema = new Schema(
             type: String,
             required: true,
         },
+        domain: {
+            type: String,
+            required: false,
+        },
+        additional_email: {
+            type: String,
+            required: false,
+        },
+        website_link: {
+            type: String,
+            required: false,
+        },
+        facebook_url: {
+            type: String,
+            required: false,
+        },
+        instagram_url: {
+            type: String,
+            required: false,
+        },
+        additional_info: {
+            type: String,
+            required: false,
+        },
     },
     { timestamps: true }
 );

@@ -3,13 +3,13 @@ import {
     changeAdminPassword,
     getVendors,
     loginVendorAdmin,
-    registerVendorAdmin,
+    // registerVendorAdmin,
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
 
 const vendorAdminRouter = Router();
 
-vendorAdminRouter.route("/register").post(registerVendorAdmin);
+// vendorAdminRouter.route("/register").post(registerVendorAdmin);
 vendorAdminRouter.route("/login").post(loginVendorAdmin);
 vendorAdminRouter
     .route("/changepassword/:id")

@@ -65,6 +65,12 @@ const registerVendor = async (req, res) => {
             state,
             city,
             vendor_type,
+            domain: "",
+            additional_email: "",
+            website_link: "",
+            facebook_url: "",
+            instagram_url: "",
+            additional_info: "",
         });
 
         const token = await generateToken(vendor._id);
@@ -115,11 +121,18 @@ const loginVendor = async (req, res) => {
             }
             if (data) {
                 const token = await generateToken(existingVendor._id);
-                return res.status(200).json({
-                    success: true,
-                    status: 200,
-                    token: token,
-                });
+                return res
+                    .status(200)
+                    .cookie("token", token, {
+                        httpOnly: true,
+                        secure: true,
+                        maxAge: 86400,
+                    })
+                    .json({
+                        success: true,
+                        status: 200,
+                        token: token,
+                    });
             } else {
                 return res.status(401).json({
                     success: false,
@@ -151,4 +164,83 @@ const getVendorDetails = async (req, res) => {
     });
 };
 
-export { registerVendor, loginVendor, getVendorDetails };
+const updateVendor = async (req, res) => {
+    const requiredFields = [
+        "brand_name",
+        "contact_person_name",
+        "email",
+        "pincode",
+        "mobile_number",
+        "address",
+        "state",
+        "city",
+        "vendor_type",
+    ];
+
+    const updateData = {};
+    const errors = [];
+
+    requiredFields.forEach((field) => {
+        if (req.body.hasOwnProperty(field)) {
+            if (!req.body[field]) {
+                errors.push(`${field} is required and cannot be empty`);
+            } else {
+                updateData[field] = req.body[field];
+            }
+        }
+    });
+
+    const optionalFields = [
+        "domain",
+        "additional_email",
+        "website_link",
+        "facebook_url",
+        "instagram_url",
+        "additional_info",
+    ];
+
+    optionalFields.forEach((field) => {
+        if (req.body.hasOwnProperty(field)) {
+            updateData[field] = req.body[field];
+        }
+    });
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: errors,
+            status: 400,
+        });
+    }
+
+    try {
+        const updatedVendor = await Vendor.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        ).select("-password");
+
+        if (!updatedVendor) {
+            return res.status(404).json({
+                success: false,
+                message: "Vendor not found",
+                status: 400,
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Vendor details updated successfully",
+            vendor: updatedVendor,
+            status: 200,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while updating vendor details",
+            error: error.message,
+        });
+    }
+};
+
+export { registerVendor, loginVendor, getVendorDetails, updateVendor };
