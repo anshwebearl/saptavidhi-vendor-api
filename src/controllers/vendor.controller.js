@@ -122,7 +122,7 @@ const loginVendor = async (req, res) => {
                 });
             } else {
                 return res.status(401).json({
-                    success: true,
+                    success: false,
                     status: 401,
                     message: "Invalid credentials",
                 });
@@ -131,6 +131,24 @@ const loginVendor = async (req, res) => {
     );
 };
 
+const getVendorDetails = async (req, res) => {
+    const { _id } = req.body.decoded;
 
+    const vendor = await Vendor.findById({ _id }).select("-password");
 
-export { registerVendor, loginVendor };
+    if (!vendor) {
+        return res.status(404).json({
+            success: false,
+            status: 404,
+            message: "vendor does not exists",
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        status: 200,
+        vendor: vendor,
+    });
+};
+
+export { registerVendor, loginVendor, getVendorDetails };
