@@ -70,6 +70,10 @@ const vendorSchema = new Schema(
             type: String,
             required: false,
         },
+        status: {
+            type: String,
+            default: "pending",
+        },
     },
     { timestamps: true }
 );

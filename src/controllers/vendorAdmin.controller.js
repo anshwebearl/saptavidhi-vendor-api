@@ -79,6 +79,10 @@ const loginVendorAdmin = async (req, res) => {
             }
             if (data) {
                 const token = await generateToken(existingVendorAdmin._id);
+                res.cookie("token", token, {
+                    maxAge: 86400 * 1000,
+                    httpOnly: true,
+                });
                 return res.status(200).json({
                     success: true,
                     status: 200,
@@ -96,54 +100,43 @@ const loginVendorAdmin = async (req, res) => {
 };
 
 const changeAdminPassword = async (req, res) => {
-    const { current_password, new_password } = req.body;
+    const { new_password } = req.body;
     const { id } = req.params;
 
-    if ([current_password, new_password].some((x) => x === "")) {
+    if (new_password === "") {
         return res.status(400).json({
             success: false,
             status: 400,
-            message: "all fields are compulsory",
+            message: "New password is required",
         });
     }
-
-    const existingVendorAdmin = await VendorAdmin.findById({ _id: id });
-    if (!existingVendorAdmin) {
-        return res.status(404).json({
-            success: false,
-            status: 404,
-            message: "admin not registered",
-        });
-    }
-
-    await bcrypt.compare(
-        current_password,
-        existingVendorAdmin.password,
-        async (err, data) => {
-            if (err) {
-                console.log("error in bcrypt compare: ", err);
-                return res.status(500);
-            }
-            if (data) {
-                const newHashedPassword = await bcrypt.hash(new_password, 10);
-                existingVendorAdmin.password = newHashedPassword;
-
-                await existingVendorAdmin.save();
-
-                return res.status(200).json({
-                    success: true,
-                    status: 200,
-                    message: "Password updated successfully",
-                });
-            } else {
-                return res.status(401).json({
-                    success: false,
-                    status: 401,
-                    message: "Invalid Current Password",
-                });
-            }
+    try {
+        const existingVendorAdmin = await VendorAdmin.findById({ _id: id });
+        if (!existingVendorAdmin) {
+            return res.status(404).json({
+                success: false,
+                status: 404,
+                message: "Admin not found",
+            });
         }
-    );
+
+        const newHashedPassword = await bcrypt.hash(new_password, 10);
+        existingVendorAdmin.password = newHashedPassword;
+        await existingVendorAdmin.save();
+
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            message: "Password updated successfully",
+        });
+    } catch (error) {
+        console.error("Error changing admin password:", error);
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            message: "Internal server error",
+        });
+    }
 };
 
 const getVendors = async (req, res) => {
@@ -172,9 +165,73 @@ const getVendors = async (req, res) => {
     });
 };
 
+const getAdmin = async (req, res) => {
+    const { _id } = req.body.decoded;
+
+    try {
+        const existingVendorAdmin = await VendorAdmin.findById({
+            _id: _id,
+        }).select("-password");
+        if (!existingVendorAdmin) {
+            return res.status(404).json({
+                success: false,
+                status: 404,
+                message: "Admin not found",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            message: "admin fetched successfully",
+            admin: existingVendorAdmin,
+        });
+    } catch (error) {
+        console.error("Error in fetching Admin:", error);
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            message: "Internal server error",
+        });
+    }
+};
+
+const changeVendorStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    try {
+        const existingVendor = await Vendor.findById({ _id: id });
+        if (!existingVendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor does not exist",
+            });
+        }
+
+        existingVendor.status = status;
+        await existingVendor.save();
+        return res.status(201).json({
+            success: true,
+            status: 201,
+            message: "status changed successfully",
+        });
+    } catch (error) {
+        console.log("error in changing vendor status: ", error);
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            message: "internal server error",
+        });
+    }
+};
+
 export {
     // registerVendorAdmin,
     changeAdminPassword,
     loginVendorAdmin,
     getVendors,
+    getAdmin,
+    changeVendorStatus,
 };

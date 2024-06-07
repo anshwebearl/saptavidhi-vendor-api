@@ -13,7 +13,7 @@ const verifyToken = async (req, res, next) => {
 
     const bearerToken = bearerHeader.split(" ")[1];
 
-    await jwt.verify(
+    jwt.verify(
         bearerToken,
         process.env.JWT_TOKEN_SECRET,
         (err, decoded) => {
