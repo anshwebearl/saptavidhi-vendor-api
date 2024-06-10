@@ -1,6 +1,7 @@
 import { Vendor } from "../models/vendor.model.js";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
+import { VendorCategory } from "../models/vendorCategory.model.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -54,6 +55,19 @@ const registerVendor = async (req, res) => {
         }
 
         const encryptedPassword = await bcrypt.hash(password, 10);
+
+        const vendorCategory = await VendorCategory.findOne({
+            name: vendor_type,
+        });
+
+        if (!vendorCategory) {
+            return res.status(404).json({
+                success: false,
+                status: 404,
+                message: "Vendor type doesnot exist.",
+            });
+        }
+
         const vendor = await Vendor.create({
             brand_name,
             contact_person_name,
@@ -64,7 +78,8 @@ const registerVendor = async (req, res) => {
             password: encryptedPassword,
             state,
             city,
-            vendor_type,
+            vendor_type: vendorCategory._id,
+            additional_details: [],
             domain: "",
             additional_email: "",
             website_link: "",
@@ -72,6 +87,9 @@ const registerVendor = async (req, res) => {
             instagram_url: "",
             additional_info: "",
         });
+
+        vendorCategory.vendor_id = vendor._id;
+        await vendorCategory.save();
 
         const token = await generateToken(vendor._id);
         return res
@@ -174,7 +192,6 @@ const updateVendor = async (req, res) => {
         "address",
         "state",
         "city",
-        "vendor_type",
     ];
 
     const updateData = {};
@@ -243,4 +260,66 @@ const updateVendor = async (req, res) => {
     }
 };
 
-export { registerVendor, loginVendor, getVendorDetails, updateVendor };
+const updateAdditionalDetails = async (req, res) => {
+    const id = req.params.id;
+
+    const { additionalDetails } = req.body;
+
+    if (!additionalDetails) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "additionalDetails is missing",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        vendor.additional_details = additionalDetails;
+
+        await vendor.save();
+
+        res.status(200).json({
+            message: "Additional details updated successfully",
+            vendor,
+        });
+    } catch (error) {
+        console.error("Error updating additional details:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+// const getVendorAdditionalDetails = async (req, res) => {
+//     const { id } = req.params;
+//     try {
+//         const vendor
+//     } catch (error) {
+//         console.error("Error fetching additional details:", error);
+//         res.status(500).json({
+//             message: "Internal server error",
+//             success: false,
+//             status: 500,
+//         });
+//     }
+// };
+
+export {
+    registerVendor,
+    loginVendor,
+    getVendorDetails,
+    updateVendor,
+    updateAdditionalDetails,
+};

@@ -43,8 +43,14 @@ const vendorSchema = new Schema(
             required: true,
         },
         vendor_type: {
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: "VendorCategory",
             required: true,
+        },
+        additional_details: {
+            type: Schema.Types.Array,
+            required: true,
+            default: {},
         },
         domain: {
             type: String,

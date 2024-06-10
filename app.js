@@ -5,6 +5,7 @@ import connectToDB from "./src/db/index.js";
 import dotenv from "dotenv";
 import vendorRouter from "./src/routes/vendor.routes.js";
 import vendorAdminRouter from "./src/routes/vendorAdmin.routes.js";
+import vendorCategoryRouter from "./src/routes/vendorCategory.routes.js";
 
 dotenv.config({
     path: "./.env",
@@ -18,6 +19,7 @@ app.use(cookieParser());
 
 app.use("/api/vendor", vendorRouter);
 app.use("/api/admin", vendorAdminRouter);
+app.use("/api/vendor-category", vendorCategoryRouter);
 
 connectToDB()
     .then(() => {

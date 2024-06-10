@@ -2,6 +2,7 @@ import { VendorAdmin } from "../models/vendorAdmin.model.js";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { Vendor } from "../models/vendor.model.js";
+import { VendorCategory } from "../models/vendorCategory.model.js";
 
 // const registerVendorAdmin = async (req, res) => {
 //     try {
@@ -227,6 +228,170 @@ const changeVendorStatus = async (req, res) => {
     }
 };
 
+const createVendorCategory = async (req, res) => {
+    try {
+        const { categoryName } = req.body;
+
+        if (!categoryName) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Please provide categoryName",
+            });
+        }
+
+        const existingCategory = await VendorCategory.findOne({
+            name: categoryName,
+        });
+
+        if (existingCategory) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Category already exists",
+            });
+        }
+
+        const newCategory = new VendorCategory({ name: categoryName });
+
+        await newCategory.save();
+
+        res.status(201).json({
+            status: 201,
+            success: true,
+            message: "Category created successfully",
+            category: newCategory,
+        });
+    } catch (error) {
+        console.error("Error creating category:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const createVendorSubCategory = async (req, res) => {
+    try {
+        const { subCategoryName, categoryName } = req.body;
+
+        if (!categoryName || !subCategoryName) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Please provide categoryName and subCategoryName",
+            });
+        }
+
+        const category = await VendorCategory.findOne({ name: categoryName });
+
+        if (!category) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Category not found",
+            });
+        }
+
+        const existingSubCategory = category.subCategoryList.find(
+            (sub) => sub.subCategoryName === subCategoryName
+        );
+        if (existingSubCategory) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Subcategory already exists for this category",
+            });
+        }
+
+        category.subCategoryList.push({ subCategoryName });
+
+        await category.save();
+
+        res.status(201).json({
+            status: 201,
+            success: true,
+            message: "Subcategory created successfully",
+            category,
+        });
+    } catch (error) {
+        console.error("Error creating category:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const createVendorProperty = async (req, res) => {
+    try {
+        const {
+            propertyName,
+            propertyDescription,
+            propertyType,
+            inputs,
+            categoryName,
+        } = req.body;
+
+        if (
+            !categoryName ||
+            !propertyName ||
+            !propertyDescription ||
+            !propertyType
+        ) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message:
+                    "Please provide propertyName, categoryName, propertyDescription, propertyType",
+            });
+        }
+
+        if (propertyType === "radioButton" && !inputs) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Please provide inputs",
+            });
+        }
+
+        const category = await VendorCategory.findOne({ name: categoryName });
+
+        if (!category) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Category not found",
+            });
+        }
+
+        category.categoryProperties.push({
+            propertyName,
+            propertyDescription,
+            propertyType,
+            inputs,
+        });
+
+        await category.save();
+
+        res.status(201).json({
+            status: 201,
+            success: true,
+            message: "Property created successfully",
+            category,
+        });
+    } catch (error) {
+        console.error("Error creating category:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 export {
     // registerVendorAdmin,
     changeAdminPassword,
@@ -234,4 +399,7 @@ export {
     getVendors,
     getAdmin,
     changeVendorStatus,
+    createVendorCategory,
+    createVendorSubCategory,
+    createVendorProperty,
 };
