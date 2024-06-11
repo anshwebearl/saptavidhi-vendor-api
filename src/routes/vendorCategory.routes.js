@@ -10,6 +10,6 @@ const vendorCategoryRouter = Router();
 vendorCategoryRouter.route("/getall").get(getAllVendorCategories);
 vendorCategoryRouter
     .route("/get-additional-details/:vendor_type")
-    .get(verifyToken, getVendorAdditionalDetails);
+    .get(verifyToken, getVendorAdditionalDetails);    
 
 export default vendorCategoryRouter;

@@ -5,9 +5,15 @@ import {
     createVendorCategory,
     createVendorProperty,
     createVendorSubCategory,
+    deleteVendorCategory,
+    deleteVendorProperty,
+    deleteVendorSubCategory,
     getAdmin,
     getVendors,
     loginVendorAdmin,
+    updateVendorCategory,
+    updateVendorProperty,
+    updateVendorSubCategory,
     // registerVendorAdmin,
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
@@ -36,10 +42,32 @@ vendorAdminRouter
     .route("/create-vendor-category")
     .post(verifyToken, createVendorCategory);
 vendorAdminRouter
-    .route("/add-vendor-subcategory")
+    .route("/update-vendor-category/:id")
+    .put(verifyToken, updateVendorCategory);
+vendorAdminRouter
+    .route("/delete-vendor-category/:id")
+    .delete(verifyToken, deleteVendorCategory);
+
+// vendor subcategory
+vendorAdminRouter
+    .route("/add-vendor-subcategory/:id")
     .put(verifyToken, createVendorSubCategory);
 vendorAdminRouter
-    .route("/add-vendor-property")
+    .route("/delete-vendor-subcategory/:id")
+    .delete(verifyToken, deleteVendorSubCategory);
+vendorAdminRouter
+    .route("/update-vendor-subcategory/:id")
+    .put(verifyToken, updateVendorSubCategory);
+
+// vendor property
+vendorAdminRouter
+    .route("/add-vendor-property/:id")
     .put(verifyToken, createVendorProperty);
+vendorAdminRouter
+    .route("/delete-vendor-property/:id")
+    .delete(verifyToken, deleteVendorProperty);
+vendorAdminRouter
+    .route("/update-vendor-property/:id")
+    .put(verifyToken, updateVendorProperty);
 
 export default vendorAdminRouter;

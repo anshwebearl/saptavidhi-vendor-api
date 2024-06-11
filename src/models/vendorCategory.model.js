@@ -1,26 +1,32 @@
 import mongoose, { Schema } from "mongoose";
 
-const subCategorySchema = new Schema({
-    subCategoryName: {
-        type: String,
+const subCategorySchema = new Schema(
+    {
+        subCategoryName: {
+            type: String,
+        },
     },
-});
+    { timestamps: true }
+);
 
-const propertySchema = new Schema({
-    propertyName: {
-        type: String,
+const propertySchema = new Schema(
+    {
+        propertyName: {
+            type: String,
+        },
+        propertyDescription: {
+            type: String,
+        },
+        propertyType: {
+            type: String,
+            enum: ["textInput", "radioButton"],
+        },
+        inputs: {
+            type: [String],
+        },
     },
-    propertyDescription: {
-        type: String,
-    },
-    propertyType: {
-        type: String,
-        enum: ["textInput", "radioButton"],
-    },
-    inputs: {
-        type: [String],
-    },
-});
+    { timestamps: true }
+);
 
 const vendorCategorySchema = new Schema(
     {

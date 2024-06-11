@@ -2,7 +2,9 @@ import { VendorCategory } from "../models/vendorCategory.model.js";
 
 const getAllVendorCategories = async (req, res) => {
     try {
-        const vendorCategory = await VendorCategory.find().select("_id name");
+        const vendorCategory = await VendorCategory.find().select(
+            "_id name createdAt updatedAt"
+        );
         if (!vendorCategory) {
             return res.status(400).json({
                 status: 400,

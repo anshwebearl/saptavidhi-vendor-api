@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { Vendor } from "../models/vendor.model.js";
 import { VendorCategory } from "../models/vendorCategory.model.js";
+import mongoose from "mongoose";
 
 // const registerVendorAdmin = async (req, res) => {
 //     try {
@@ -141,29 +142,52 @@ const changeAdminPassword = async (req, res) => {
 };
 
 const getVendors = async (req, res) => {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    let vendor;
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "vendorcategories",
+                    localField: "vendor_type",
+                    foreignField: "_id",
+                    as: "vendorCategory",
+                },
+            },
+            {
+                $unwind: "$vendorCategory",
+            },
+        ];
 
-    if (!id) {
-        vendor = await Vendor.find();
-    } else {
-        vendor = await Vendor.findById({ _id: id }).select("-password");
-    }
+        if (id) {
+            pipeline.unshift({
+                $match: { _id: new mongoose.Types.ObjectId(id) },
+            });
+        }
 
-    if (!vendor) {
-        return res.status(404).json({
+        const vendors = await Vendor.aggregate(pipeline);
+
+        if (!vendors || vendors.length === 0) {
+            return res.status(404).json({
+                success: false,
+                status: 404,
+                message: "Vendor does not exist",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            vendor: vendors,
+        });
+    } catch (error) {
+        console.error("Error retrieving vendors:", error);
+        res.status(500).json({
+            message: "Internal server error",
             success: false,
-            status: 404,
-            message: "vendor does not exists",
+            status: 500,
         });
     }
-
-    return res.status(200).json({
-        success: true,
-        status: 200,
-        vendor: vendor,
-    });
 };
 
 const getAdmin = async (req, res) => {
@@ -272,19 +296,105 @@ const createVendorCategory = async (req, res) => {
     }
 };
 
-const createVendorSubCategory = async (req, res) => {
-    try {
-        const { subCategoryName, categoryName } = req.body;
+const updateVendorCategory = async (req, res) => {
+    const { id } = req.params;
+    const { updatedCategoryName } = req.body;
 
-        if (!categoryName || !subCategoryName) {
-            return res.status(400).json({
-                status: 400,
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide id",
+        });
+    }
+
+    if (!updatedCategoryName) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide updatedCategoryName",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findById(id);
+
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
                 success: false,
-                message: "Please provide categoryName and subCategoryName",
+                message: "vendor category doesnt exist",
             });
         }
 
-        const category = await VendorCategory.findOne({ name: categoryName });
+        vendorCategory.name = updatedCategoryName;
+        await vendorCategory.save();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "vendor name updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating category:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteVendorCategory = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide id",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findByIdAndDelete(id);
+
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "no vendor found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Vendor category deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting category:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const createVendorSubCategory = async (req, res) => {
+    const { id } = req.params;
+    const { subCategoryName } = req.body;
+
+    if (!subCategoryName) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide categoryName and subCategoryName",
+        });
+    }
+    try {
+        const category = await VendorCategory.findById(id);
 
         if (!category) {
             return res.status(404).json({
@@ -325,27 +435,150 @@ const createVendorSubCategory = async (req, res) => {
     }
 };
 
-const createVendorProperty = async (req, res) => {
-    try {
-        const {
-            propertyName,
-            propertyDescription,
-            propertyType,
-            inputs,
-            categoryName,
-        } = req.body;
+const deleteVendorSubCategory = async (req, res) => {
+    const { id } = req.params;
+    const { subcategoryId } = req.body;
 
-        if (
-            !categoryName ||
-            !propertyName ||
-            !propertyDescription ||
-            !propertyType
-        ) {
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor category id in params",
+        });
+    }
+
+    if (!subcategoryId) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide subcategory ID in body",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findById(id);
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor category not found",
+            });
+        }
+
+        const subCategoryIndex = vendorCategory.subCategoryList.findIndex(
+            (sub) => sub._id.toString() === subcategoryId
+        );
+
+        if (subCategoryIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Subcategory not found",
+            });
+        }
+
+        vendorCategory.subCategoryList.splice(subCategoryIndex, 1);
+
+        await vendorCategory.save();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Subcategory deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting subcategory:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const updateVendorSubCategory = async (req, res) => {
+    const { id } = req.params;
+    const { subcategoryId, subCategoryName } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor category id in params",
+        });
+    }
+
+    if (!subcategoryId || !subCategoryName) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "subcategoryId and subCategoryName is required",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findById(id);
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor category not found",
+            });
+        }
+
+        const subCategoryIndex = vendorCategory.subCategoryList.findIndex(
+            (sub) => sub._id.toString() === subcategoryId
+        );
+
+        if (subCategoryIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Subcategory not found",
+            });
+        }
+
+        vendorCategory.subCategoryList[subCategoryIndex].subCategoryName =
+            subCategoryName;
+
+        await vendorCategory.save();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Subcategory updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating subcategory:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const createVendorProperty = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor category id in params",
+        });
+    }
+
+    try {
+        const { propertyName, propertyDescription, propertyType, inputs } =
+            req.body;
+
+        if (!propertyName || !propertyDescription || !propertyType) {
             return res.status(400).json({
                 status: 400,
                 success: false,
                 message:
-                    "Please provide propertyName, categoryName, propertyDescription, propertyType",
+                    "Please provide propertyName, propertyDescription, propertyType",
             });
         }
 
@@ -357,13 +590,25 @@ const createVendorProperty = async (req, res) => {
             });
         }
 
-        const category = await VendorCategory.findOne({ name: categoryName });
+        const category = await VendorCategory.findById(id);
 
         if (!category) {
             return res.status(404).json({
                 status: 404,
                 success: false,
                 message: "Category not found",
+            });
+        }
+
+        const properyIndex = category.categoryProperties.findIndex(
+            (sub) => sub.propertyName === propertyName
+        );
+
+        if (properyIndex !== -1) {
+            return res.status(409).json({
+                status: 409,
+                success: false,
+                message: "property already exists",
             });
         }
 
@@ -392,6 +637,154 @@ const createVendorProperty = async (req, res) => {
     }
 };
 
+const deleteVendorProperty = async (req, res) => {
+    const { id } = req.params;
+    const { propertyId } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor property id in params",
+        });
+    }
+
+    if (!propertyId) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide propertyId in body",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findById(id);
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor category not found",
+            });
+        }
+
+        const propertyIndex = vendorCategory.categoryProperties.findIndex(
+            (sub) => sub._id.toString() === propertyId
+        );
+
+        if (propertyIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Property not found",
+            });
+        }
+
+        vendorCategory.categoryProperties.splice(propertyIndex, 1);
+
+        await vendorCategory.save();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "property deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting property:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const updateVendorProperty = async (req, res) => {
+    const { id } = req.params;
+    const {
+        propertyId,
+        propertyName,
+        propertyDescription,
+        propertyType,
+        inputs,
+    } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor property id in params",
+        });
+    }
+
+    if (
+        !propertyId ||
+        !propertyName ||
+        !propertyDescription ||
+        !propertyType ||
+        !inputs
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "propertyId, propertyName, propertyDescription, propertyType  is required",
+        });
+    }
+
+    if (propertyType === "radioButton" && inputs.length === 0) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide inputs",
+        });
+    }
+
+    try {
+        const vendorCategory = await VendorCategory.findById(id);
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor category not found",
+            });
+        }
+
+        const propertyIndex = vendorCategory.categoryProperties.findIndex(
+            (sub) => sub._id.toString() === propertyId
+        );
+
+        if (propertyIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "property not found",
+            });
+        }
+
+        vendorCategory.categoryProperties[propertyIndex] = {
+            propertyName,
+            propertyDescription,
+            propertyType,
+            inputs,
+        };
+
+        await vendorCategory.save();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "property updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating property:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 export {
     // registerVendorAdmin,
     changeAdminPassword,
@@ -402,4 +795,10 @@ export {
     createVendorCategory,
     createVendorSubCategory,
     createVendorProperty,
+    updateVendorCategory,
+    deleteVendorCategory,
+    deleteVendorSubCategory,
+    updateVendorSubCategory,
+    deleteVendorProperty,
+    updateVendorProperty,
 };
