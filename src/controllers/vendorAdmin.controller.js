@@ -582,7 +582,11 @@ const createVendorProperty = async (req, res) => {
             });
         }
 
-        if (propertyType === "radioButton" && !inputs) {
+        if (
+            (propertyType === "radioButton" ||
+                propertyName === "multiSelect") &&
+            inputs.length === 0
+        ) {
             return res.status(400).json({
                 status: 400,
                 success: false,
@@ -731,7 +735,10 @@ const updateVendorProperty = async (req, res) => {
         });
     }
 
-    if (propertyType === "radioButton" && inputs.length === 0) {
+    if (
+        (propertyType === "radioButton" || propertyName === "multiSelect") &&
+        inputs.length === 0
+    ) {
         return res.status(400).json({
             status: 400,
             success: false,
