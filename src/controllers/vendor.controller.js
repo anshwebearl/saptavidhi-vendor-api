@@ -2,6 +2,7 @@ import { Vendor } from "../models/vendor.model.js";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { VendorCategory } from "../models/vendorCategory.model.js";
+import { VenueMenu } from "../models/Venue/venueMenu.model.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -71,7 +72,7 @@ const registerVendor = async (req, res) => {
         const additional_details = [];
         vendorCategory.categoryProperties.forEach((el) => {
             additional_details.push({
-                _id: el._id,    
+                _id: el._id,
                 [el.propertyName]: el.propertyType === "multiSelect" ? [] : "",
             });
         });
@@ -312,19 +313,275 @@ const updateAdditionalDetails = async (req, res) => {
     }
 };
 
-// const getVendorAdditionalDetails = async (req, res) => {
-//     const { id } = req.params;
-//     try {
-//         const vendor
-//     } catch (error) {
-//         console.error("Error fetching additional details:", error);
-//         res.status(500).json({
-//             message: "Internal server error",
-//             success: false,
-//             status: 500,
-//         });
-//     }
-// };
+// FOR VENDOR CATEGORY - VENUE
+const addMenu = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    const data = req.body;
+
+    if (
+        !data.menu_title ||
+        !data.menu_type ||
+        !data.price_per_plate ||
+        !data.veg_starters ||
+        !data.veg_main_course ||
+        !data.veg_soup_salad ||
+        !data.deserts
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "provide menu_title, menu_type, price_per_plate, veg_starters, veg_main_course, veg_soup_salad and deserts",
+        });
+    }
+    if (
+        ["Non-Veg Standard", "Non-Veg Premium"].includes(data.menu_type) &&
+        (!data.nonveg_starters ||
+            !data.nonveg_main_course ||
+            !data.nonveg_soup_salad ||
+            !data.live_counters)
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "provide nonveg_starters, nonveg_main_course, nonveg_soup_salad and live_counters",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor not found",
+            });
+        }
+
+        const menuItem = await VenueMenu.create({ vendor_id: id, ...data });
+        await menuItem.save();
+
+        return res.status(201).json({
+            status: 201,
+            success: true,
+            message: "menu created.",
+            menu: menuItem,
+        });
+    } catch (error) {
+        console.error("Error adding menu item:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getMenus = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor not found",
+            });
+        }
+
+        const menu = await VenueMenu.find({ vendor_id: id });
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "menu fetched successfully",
+            menu: menu,
+        });
+    } catch (error) {
+        console.error("Error getting menu items: ", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteMenu = async (req, res) => {
+    const { id } = req.params;
+
+    const { menu_id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    if (!menu_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide menu_id",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const menuItem = await VenueMenu.findByIdAndDelete(menu_id);
+
+        if (!menuItem) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Menu Item not found",
+            });
+        }
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "menu item deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting menu item:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const updateMenu = async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    if (
+        !data.menu_id ||
+        !data.menu_title ||
+        !data.menu_type ||
+        !data.price_per_plate ||
+        !data.veg_starters ||
+        !data.veg_main_course ||
+        !data.veg_soup_salad ||
+        !data.deserts
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "Provide menu_id, menu_title, menu_type, price_per_plate, veg_starters, veg_main_course, veg_soup_salad, and deserts",
+        });
+    }
+
+    if (
+        ["Non-Veg Standard", "Non-Veg Premium"].includes(data.menu_type) &&
+        (!data.nonveg_starters ||
+            !data.nonveg_main_course ||
+            !data.nonveg_soup_salad ||
+            !data.live_counters)
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "Provide nonveg_starters, nonveg_main_course, nonveg_soup_salad, and live_counters",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const menuItem = await VenueMenu.findById(data.menu_id);
+
+        if (!menuItem) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Menu item not found",
+            });
+        }
+
+        menuItem.menu_title = data.menu_title;
+        menuItem.menu_type = data.menu_type;
+        menuItem.price_per_plate = data.price_per_plate;
+        menuItem.veg_starters = data.veg_starters;
+        menuItem.veg_main_course = data.veg_main_course;
+        menuItem.veg_soup_salad = data.veg_soup_salad;
+        menuItem.deserts = data.deserts;
+
+        if (["Non-Veg Standard", "Non-Veg Premium"].includes(data.menu_type)) {
+            menuItem.nonveg_starters = data.nonveg_starters;
+            menuItem.nonveg_main_course = data.nonveg_main_course;
+            menuItem.nonveg_soup_salad = data.nonveg_soup_salad;
+            menuItem.live_counters = data.live_counters;
+        }
+
+        await menuItem.save();
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Menu item updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating menu item:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
 
 export {
     registerVendor,
@@ -332,4 +589,8 @@ export {
     getVendorDetails,
     updateVendor,
     updateAdditionalDetails,
+    addMenu,
+    getMenus,
+    deleteMenu,
+    updateMenu,
 };
