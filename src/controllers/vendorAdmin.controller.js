@@ -622,8 +622,22 @@ const createVendorProperty = async (req, res) => {
             propertyType,
             inputs,
         });
-
         await category.save();
+
+        const savedProperty = category.categoryProperties.find(
+            (sub) => sub.propertyName === propertyName
+        );
+        const propertyId = savedProperty._id;
+
+        const vendors = await Vendor.find({ vendor_type: id });
+
+        for (let vendor of vendors) {
+            vendor.additional_details.push({
+                _id: propertyId,
+                [propertyName]: propertyType === "multiSelect" ? [] : "",
+            });
+            await vendor.save();
+        }
 
         res.status(201).json({
             status: 201,
@@ -649,7 +663,7 @@ const deleteVendorProperty = async (req, res) => {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: "provide vendor property id in params",
+            message: "provide vendor id in params",
         });
     }
 
@@ -686,6 +700,18 @@ const deleteVendorProperty = async (req, res) => {
         vendorCategory.categoryProperties.splice(propertyIndex, 1);
 
         await vendorCategory.save();
+
+        const vendors = await Vendor.find({ vendor_type: id });
+
+        for (let vendor of vendors) {
+            const detailIndex = vendor.additional_details.findIndex(
+                (detail) => detail._id == propertyId
+            );
+            if (detailIndex !== -1) {
+                vendor.additional_details.splice(detailIndex, 1);
+            }
+            await vendor.save();
+        }
 
         return res.status(200).json({
             status: 200,
@@ -768,7 +794,9 @@ const updateVendorProperty = async (req, res) => {
             });
         }
 
+        // Preserve the _id field
         vendorCategory.categoryProperties[propertyIndex] = {
+            _id: vendorCategory.categoryProperties[propertyIndex]._id,
             propertyName,
             propertyDescription,
             propertyType,
@@ -776,6 +804,28 @@ const updateVendorProperty = async (req, res) => {
         };
 
         await vendorCategory.save();
+
+        const vendors = await Vendor.find({ vendor_type: id });
+
+        for (let vendor of vendors) {
+            const detailIndex = vendor.additional_details.findIndex(
+                (detail) => detail._id.toString() === propertyId
+            );
+            if (detailIndex !== -1) {
+                // Update the propertyName while preserving the value
+                const currentDetail = vendor.additional_details[detailIndex];
+                const currentValue =
+                    currentDetail[
+                        Object.keys(currentDetail).find((key) => key !== "_id")
+                    ];
+
+                vendor.additional_details[detailIndex] = {
+                    _id: propertyId,
+                    [propertyName]: currentValue,
+                };
+                await vendor.save();
+            }
+        }
 
         return res.status(200).json({
             status: 200,

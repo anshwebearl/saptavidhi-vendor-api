@@ -68,6 +68,16 @@ const registerVendor = async (req, res) => {
             });
         }
 
+        const additional_details = [];
+        vendorCategory.categoryProperties.forEach((el) => {
+            additional_details.push({
+                _id: el._id,    
+                [el.propertyName]: el.propertyType === "multiSelect" ? [] : "",
+            });
+        });
+
+        console.log(additional_details);
+
         const vendor = await Vendor.create({
             brand_name,
             contact_person_name,
@@ -79,7 +89,7 @@ const registerVendor = async (req, res) => {
             state,
             city,
             vendor_type: vendorCategory._id,
-            additional_details: [],
+            additional_details: additional_details,
             domain: "",
             additional_email: "",
             website_link: "",

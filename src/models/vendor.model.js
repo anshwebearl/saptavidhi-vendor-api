@@ -50,7 +50,7 @@ const vendorSchema = new Schema(
         additional_details: {
             type: Schema.Types.Array,
             required: true,
-            default: {},
+            default: [],
         },
         domain: {
             type: String,
