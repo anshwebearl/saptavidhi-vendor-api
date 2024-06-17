@@ -9,16 +9,17 @@ import {
     deleteVendorProperty,
     deleteVendorSubCategory,
     getAdmin,
+    getBanquets,
     getVendors,
     loginVendorAdmin,
     updateVendorCategory,
     updateVendorProperty,
     updateVendorSubCategory,
+    getMenus
     // registerVendorAdmin,
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifyOtp from "../middlewares/verifyOtp.js";
-import { getMenus } from "../controllers/vendor.controller.js";
 
 const vendorAdminRouter = Router();
 
@@ -73,5 +74,6 @@ vendorAdminRouter
 
 // vendor category - Venues
 vendorAdminRouter.route("/get-menu/:id").get(verifyToken, getMenus);
+vendorAdminRouter.route("/get-banquet/:id").get(verifyToken, getBanquets);
 
 export default vendorAdminRouter;

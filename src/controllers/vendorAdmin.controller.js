@@ -4,6 +4,8 @@ import generateToken from "../utils/generateToken.js";
 import { Vendor } from "../models/vendor.model.js";
 import { VendorCategory } from "../models/vendorCategory.model.js";
 import mongoose from "mongoose";
+import { VenueMenu } from "../models/Venue/venueMenu.model.js";
+import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
 
 // const registerVendorAdmin = async (req, res) => {
 //     try {
@@ -883,6 +885,54 @@ const getMenus = async (req, res) => {
     }
 };
 
+const getBanquets = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const banquets = await VenueBanquet.find({ vendor_id: id });
+
+        if (!banquets) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Banquets not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "banquets fetched successfully",
+            banquets: banquets,
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+}
+
 export {
     // registerVendorAdmin,
     changeAdminPassword,
@@ -900,4 +950,5 @@ export {
     deleteVendorProperty,
     updateVendorProperty,
     getMenus,
+    getBanquets
 };
