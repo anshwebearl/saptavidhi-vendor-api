@@ -1,4 +1,5 @@
 import express from "express";
+import path from 'path';
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectToDB from "./src/db/index.js";
@@ -16,6 +17,8 @@ const app = express();
 app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+app.use('/uploads', express.static('./uploads'));
 
 app.use("/api/vendor", vendorRouter);
 app.use("/api/admin", vendorAdminRouter);

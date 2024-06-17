@@ -842,6 +842,47 @@ const updateVendorProperty = async (req, res) => {
     }
 };
 
+// VENUES
+const getMenus = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor not found",
+            });
+        }
+
+        const menu = await VenueMenu.find({ vendor_id: id });
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "menu fetched successfully",
+            menu: menu,
+        });
+    } catch (error) {
+        console.error("Error getting menu items: ", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 export {
     // registerVendorAdmin,
     changeAdminPassword,
@@ -858,4 +899,5 @@ export {
     updateVendorSubCategory,
     deleteVendorProperty,
     updateVendorProperty,
+    getMenus,
 };

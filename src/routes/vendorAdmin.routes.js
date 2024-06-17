@@ -18,6 +18,7 @@ import {
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifyOtp from "../middlewares/verifyOtp.js";
+import { getMenus } from "../controllers/vendor.controller.js";
 
 const vendorAdminRouter = Router();
 
@@ -69,5 +70,8 @@ vendorAdminRouter
 vendorAdminRouter
     .route("/update-vendor-property/:id")
     .put(verifyToken, updateVendorProperty);
+
+// vendor category - Venues
+vendorAdminRouter.route("/get-menu/:id").get(verifyToken, getMenus);
 
 export default vendorAdminRouter;

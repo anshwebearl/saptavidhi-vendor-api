@@ -1,8 +1,10 @@
 import { Vendor } from "../models/vendor.model.js";
+import fs from "fs";
 import bcrypt from "bcrypt";
 import generateToken from "../utils/generateToken.js";
 import { VendorCategory } from "../models/vendorCategory.model.js";
 import { VenueMenu } from "../models/Venue/venueMenu.model.js";
+import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -314,6 +316,8 @@ const updateAdditionalDetails = async (req, res) => {
 };
 
 // FOR VENDOR CATEGORY - VENUE
+
+// MENU
 const addMenu = async (req, res) => {
     const { id } = req.params;
 
@@ -583,6 +587,314 @@ const updateMenu = async (req, res) => {
     }
 };
 
+// BANQUETS
+const addBanquet = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    const { title, banquet_type, fixed_capacity, max_capacity, state, city } =
+        req.body;
+
+    const cover_photo = req.files["cover_photo"][0].path;
+    const additional_photos = req.files["additional_photos"].map(
+        (file) => file.path
+    );
+
+    if (!cover_photo || !additional_photos) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide cover_photo and additional_photos",
+        });
+    }
+
+    if (additional_photos.length < 2) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide atleast 2 additional_photos",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const newVenueBanquet = new VenueBanquet({
+            vendor_id: id,
+            title,
+            banquet_type,
+            fixed_capacity,
+            max_capacity,
+            cover_photo,
+            additional_photos,
+            state,
+            city,
+        });
+
+        await newVenueBanquet.save();
+
+        return res.status(201).json({
+            status: 201,
+            success: true,
+            message: "Banquet Created Successfully",
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getBanquets = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const banquets = await VenueBanquet.find({ vendor_id: id });
+
+        if (!banquets) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Banquets not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "banquets fetched successfully",
+            banquets: banquets,
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteBanquet = async (req, res) => {
+    const { id } = req.params;
+
+    const { banquet_id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    if (!banquet_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide banquet_id",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const banquet = await VenueBanquet.findById(banquet_id);
+
+        if (!banquet) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Banquets not found",
+            });
+        }
+
+        const deleteFile = (filePath) => {
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`Error deleting file ${filePath}:`, err);
+                }
+            });
+        };
+
+        // Delete cover photo
+        if (banquet.cover_photo) {
+            deleteFile(banquet.cover_photo);
+        }
+
+        // Delete additional photos
+        if (banquet.additional_photos && banquet.additional_photos.length > 0) {
+            banquet.additional_photos.forEach((photo) => deleteFile(photo));
+        }
+
+        // Delete the banquet document
+        await VenueBanquet.findByIdAndDelete(banquet_id);
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Banquet and its images deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const updateBanquet = async (req, res) => {
+    const { id } = req.params;
+    const {
+        banquet_id,
+        title,
+        banquet_type,
+        fixed_capacity,
+        max_capacity,
+        state,
+        city,
+        existing_cover_photo,
+        existing_additional_photos,
+        updated_additional_photos,
+        updated_cover_photo,
+    } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const existingBanquet = await VenueBanquet.findById(banquet_id);
+        if (!existingBanquet) {
+            return res.status(404).json({
+                success: false,
+                message: "Banquet not found",
+            });
+        }
+
+        let cover_photo = existing_cover_photo;
+        let additional_photos = existing_additional_photos.split(",");
+
+        const deleteFile = (filePath) => {
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`Error deleting file ${filePath}:`, err);
+                }
+            });
+        };
+
+        if (!existing_cover_photo) {
+            deleteFile(existingBanquet.cover_photo);
+        }
+
+        const filesToDelete = existingBanquet.additional_photos.filter(
+            (photo) => !additional_photos.includes(photo)
+        );
+
+        filesToDelete.forEach((filePath) => {
+            deleteFile(filePath);
+        });
+
+        if (
+            req.files["updated_cover_photo"] &&
+            req.files["updated_cover_photo"].length > 0
+        ) {
+            cover_photo = req.files["updated_cover_photo"][0].path;
+        }
+
+        if (
+            req.files["updated_additional_photos"] &&
+            req.files["updated_additional_photos"].length > 0
+        ) {
+            additional_photos = additional_photos.concat(
+                req.files["updated_additional_photos"].map((file) => file.path)
+            );
+        }
+
+        existingBanquet.title = title;
+        existingBanquet.banquet_type = banquet_type;
+        existingBanquet.fixed_capacity = fixed_capacity;
+        existingBanquet.max_capacity = max_capacity;
+        existingBanquet.state = state;
+        existingBanquet.city = city;
+        existingBanquet.cover_photo = cover_photo;
+        existingBanquet.additional_photos = additional_photos;
+
+        await existingBanquet.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Banquet updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating banquet:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
+    }
+};
+
 export {
     registerVendor,
     loginVendor,
@@ -593,4 +905,8 @@ export {
     getMenus,
     deleteMenu,
     updateMenu,
+    addBanquet,
+    getBanquets,
+    deleteBanquet,
+    updateBanquet,
 };

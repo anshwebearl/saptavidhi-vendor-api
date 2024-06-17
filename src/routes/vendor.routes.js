@@ -1,16 +1,24 @@
 import { Router } from "express";
 import {
+    addBanquet,
     addMenu,
+    deleteBanquet,
     deleteMenu,
+    getBanquets,
     getMenus,
     getVendorDetails,
     loginVendor,
     registerVendor,
     updateAdditionalDetails,
+    updateBanquet,
     updateMenu,
     updateVendor,
 } from "../controllers/vendor.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
+import {
+    imageValidator,
+    updatedImageValidator,
+} from "../middlewares/validateImages.js";
 
 const vendorRouter = Router();
 
@@ -26,9 +34,19 @@ vendorRouter
     .put(verifyToken, updateAdditionalDetails);
 
 // VENUE
+// menu
 vendorRouter.route("/add-menu/:id").post(verifyToken, addMenu);
 vendorRouter.route("/get-menu/:id").get(verifyToken, getMenus);
 vendorRouter.route("/delete-menu/:id").delete(verifyToken, deleteMenu);
 vendorRouter.route("/update-menu/:id").put(verifyToken, updateMenu);
+// banquets
+vendorRouter
+    .route("/add-banquet/:id")
+    .post(verifyToken, imageValidator, addBanquet);
+vendorRouter.route("/get-banquets/:id").get(verifyToken, getBanquets);
+vendorRouter.route("/delete-banquet/:id").delete(verifyToken, deleteBanquet);
+vendorRouter
+    .route("/update-banquet/:id")
+    .put(verifyToken, updatedImageValidator, updateBanquet);
 
 export default vendorRouter;
