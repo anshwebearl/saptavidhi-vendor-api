@@ -1,11 +1,20 @@
 import { Router } from "express";
 import {
+    addAlbumPhotos,
     addBanquet,
     addMenu,
+    addProjectAlbum,
+    addProjectVideo,
+    deleteAlbumPhotos,
     deleteBanquet,
     deleteMenu,
+    deleteProjectAlbums,
+    deleteProjectVideos,
+    getAlbumById,
     getBanquets,
     getMenus,
+    getProjectAlbums,
+    getProjectVideos,
     getVendorDetails,
     loginVendor,
     registerVendor,
@@ -18,6 +27,7 @@ import verifyToken from "../middlewares/verifyToken.js";
 import {
     imageValidator,
     updatedImageValidator,
+    projectValidator,
 } from "../middlewares/validateImages.js";
 
 const vendorRouter = Router();
@@ -32,6 +42,34 @@ vendorRouter.route("/updatevendor/:id").patch(verifyToken, updateVendor);
 vendorRouter
     .route("/update-additional-details/:id")
     .put(verifyToken, updateAdditionalDetails);
+
+// COMMON FUNCTIONALITY
+// projects
+vendorRouter
+    .route("/add-project-album/:id")
+    .post(verifyToken, projectValidator, addProjectAlbum);
+vendorRouter.route("/add-project-video/:id").post(verifyToken, addProjectVideo);
+vendorRouter
+    .route("/get-project-albums/:id")
+    .get(verifyToken, getProjectAlbums);
+vendorRouter
+    .route("/get-vendor-album")
+    .get(verifyToken, getAlbumById);
+vendorRouter
+    .route("/get-project-videos/:id")
+    .get(verifyToken, getProjectVideos);
+vendorRouter
+    .route("/delete-project-videos/:id")
+    .delete(verifyToken, deleteProjectVideos);
+vendorRouter
+    .route("/delete-project-album/:id")
+    .delete(verifyToken, deleteProjectAlbums);
+vendorRouter
+    .route("/delete-album-photos/:id")
+    .delete(verifyToken, deleteAlbumPhotos);
+vendorRouter
+    .route("/add-album-photos/:id")
+    .post(verifyToken, projectValidator, addAlbumPhotos);
 
 // VENUE
 // menu

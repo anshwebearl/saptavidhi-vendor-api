@@ -15,7 +15,8 @@ import {
     updateVendorCategory,
     updateVendorProperty,
     updateVendorSubCategory,
-    getMenus
+    getMenus,
+    getProjects,
     // registerVendorAdmin,
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
@@ -71,6 +72,9 @@ vendorAdminRouter
 vendorAdminRouter
     .route("/update-vendor-property/:id")
     .put(verifyToken, updateVendorProperty);
+
+// vendor common - Projects
+vendorAdminRouter.route("/get-projects/:id").get(verifyToken, getProjects);
 
 // vendor category - Venues
 vendorAdminRouter.route("/get-menu/:id").get(verifyToken, getMenus);

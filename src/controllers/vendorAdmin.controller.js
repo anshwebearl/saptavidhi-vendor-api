@@ -844,6 +844,44 @@ const updateVendorProperty = async (req, res) => {
     }
 };
 
+// COMMON FUNCTIONALITY
+const getProjects = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "project fetched successfully",
+            project: existingProject,
+        });
+    } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 // VENUES
 const getMenus = async (req, res) => {
     const { id } = req.params;
@@ -950,5 +988,6 @@ export {
     deleteVendorProperty,
     updateVendorProperty,
     getMenus,
-    getBanquets
+    getBanquets,
+    getProjects
 };

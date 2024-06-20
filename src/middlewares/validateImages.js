@@ -46,6 +46,8 @@ export const uploadUpdatedPhotos = upload.fields([
     { name: "updated_additional_photos", maxCount: 10 },
 ]);
 
+export const uploadProject = upload.fields([{ name: "photos", maxCount: 10 }]);
+
 // Middleware to validate images
 export const imageValidator = (req, res, next) => {
     uploadFields(req, res, (err) => {
@@ -70,6 +72,26 @@ export const imageValidator = (req, res, next) => {
 // Middleware to validate updated photos
 export const updatedImageValidator = (req, res, next) => {
     uploadUpdatedPhotos(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: err.message,
+            });
+        } else if (err) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: err.message,
+            });
+        }
+        // Next middleware
+        next();
+    });
+};
+
+export const projectValidator = (req, res, next) => {
+    uploadProject(req, res, (err) => {
         if (err instanceof multer.MulterError) {
             return res.status(400).json({
                 status: 400,

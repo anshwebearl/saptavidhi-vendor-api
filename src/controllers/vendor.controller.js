@@ -5,6 +5,7 @@ import generateToken from "../utils/generateToken.js";
 import { VendorCategory } from "../models/vendorCategory.model.js";
 import { VenueMenu } from "../models/Venue/venueMenu.model.js";
 import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
+import { VendorProject } from "../models/vendorProject.model.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -103,6 +104,8 @@ const registerVendor = async (req, res) => {
 
         vendorCategory.vendor_id = vendor._id;
         await vendorCategory.save();
+
+        await VendorProject.create({ vendor_id: vendor._id });
 
         const token = await generateToken(vendor._id);
         return res
@@ -307,6 +310,495 @@ const updateAdditionalDetails = async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating additional details:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+// COMMON FOR ALL CATEGORIES
+
+// PROJECTS
+
+const addProjectAlbum = async (req, res) => {
+    const { id } = req.params;
+
+    const { album_title } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    if (!album_title || album_title === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide album_title in body",
+        });
+    }
+
+    const photos = req.files["photos"].map((file) => file.path);
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        existingProject.albums.push({
+            album_title: album_title,
+            photos: photos,
+        });
+
+        await existingProject.save();
+
+        return res.status(201).json({
+            status: 201,
+            success: true,
+            message: "album added successfully",
+        });
+    } catch (error) {
+        console.error("Error adding project photos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const addProjectVideo = async (req, res) => {
+    const { id } = req.params;
+
+    const { video_link } = req.body;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    if (!video_link || video_link === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide video_link in body",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        existingProject.videos.push(video_link);
+
+        await existingProject.save();
+
+        return res.status(201).json({
+            status: 201,
+            success: true,
+            message: "video added successfully",
+        });
+    } catch (error) {
+        console.error("Error adding project videos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getProjectAlbums = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "project fetched successfully",
+            albums: existingProject.albums,
+        });
+    } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getAlbumById = async (req, res) => {
+    const { vendor_id, album_id } = req.query;
+
+    if (!vendor_id || !album_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id and album_id in query",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({
+            vendor_id: vendor_id,
+        });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        const albumIndex = existingProject.albums.findIndex(
+            (album) => album._id.toString() === album_id
+        );
+
+        if (albumIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Album not found",
+            });
+        }
+
+        res.status(200).json({
+            message: "Album fetched successfully",
+            success: true,
+            status: 200,
+            album: existingProject.albums[albumIndex],
+        });
+    } catch (error) {
+        console.error("Error adding album photos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getProjectVideos = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "project fetched successfully",
+            photos: existingProject.videos,
+        });
+    } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteProjectAlbums = async (req, res) => {
+    const { id } = req.params;
+
+    const { items_to_delete } = req.body;
+
+    if (!items_to_delete || items_to_delete.length === 0) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide items_to_delete in body",
+        });
+    }
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        const deleteFile = (filePath) => {
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`Error deleting file ${filePath}:`, err);
+                }
+            });
+        };
+
+        items_to_delete.forEach((album_id) => {
+            const albumIndex = existingProject.albums.findIndex(
+                (album) => album._id.toString() === album_id
+            );
+            if (albumIndex !== -1) {
+                const album = existingProject.albums[albumIndex];
+                album.photos.forEach((photo) => {
+                    deleteFile(photo);
+                });
+                existingProject.albums.splice(albumIndex, 1);
+            }
+        });
+
+        await existingProject.save();
+
+        res.status(201).json({
+            message: "Album and its photos deleted successfully",
+            success: true,
+            status: 201,
+        });
+    } catch (error) {
+        console.error("Error deleting project videos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const addAlbumPhotos = async (req, res) => {
+    const { id } = req.params;
+
+    const { album_id } = req.body;
+
+    if (!album_id || album_id.trim() === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide album_id in body",
+        });
+    }
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        const albumIndex = existingProject.albums.findIndex(
+            (album) => album._id.toString() === album_id
+        );
+
+        if (albumIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Album not found",
+            });
+        }
+
+        const photos = req.files["photos"].map((file) => file.path);
+
+        existingProject.albums[albumIndex].photos =
+            existingProject.albums[albumIndex].photos.concat(photos);
+
+        await existingProject.save();
+
+        res.status(201).json({
+            message: "photos added successfully",
+            success: true,
+            status: 201,
+        });
+    } catch (error) {
+        console.error("Error adding album photos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteAlbumPhotos = async (req, res) => {
+    const { id } = req.params;
+
+    const { album_id, items_to_delete } = req.body;
+
+    if (!album_id || album_id.trim() === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide album_id in body",
+        });
+    }
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    if (!items_to_delete || items_to_delete.length === 0) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide items_to_delete in body",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        const albumIndex = existingProject.albums.findIndex(
+            (album) => album._id.toString() === album_id
+        );
+
+        if (albumIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Album not found",
+            });
+        }
+
+        const deleteFile = (filePath) => {
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error(`Error deleting file ${filePath}:`, err);
+                }
+            });
+        };
+
+        existingProject.albums[albumIndex].photos = existingProject.albums[
+            albumIndex
+        ].photos.filter((photo) => !items_to_delete.includes(photo));
+
+        items_to_delete.forEach((filePath) => {
+            deleteFile(filePath);
+        });
+
+        await existingProject.save();
+
+        res.status(200).json({
+            message: "Photos deleted successfully",
+            success: true,
+            status: 200,
+        });
+    } catch (error) {
+        console.error("Error adding album photos:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const deleteProjectVideos = async (req, res) => {
+    const { id } = req.params;
+
+    const { items_to_delete } = req.body;
+
+    if (!items_to_delete || items_to_delete.length === 0) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide items_to_delete in body",
+        });
+    }
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in params",
+        });
+    }
+
+    try {
+        let existingProject = await VendorProject.findOne({ vendor_id: id });
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor Doesnot have any projects",
+            });
+        }
+
+        const updatedPhotosList = existingProject.videos.filter(
+            (el) => !items_to_delete.includes(el)
+        );
+
+        existingProject.videos = updatedPhotosList;
+        await existingProject.save();
+
+        res.status(201).json({
+            message: "items deleted successfully",
+            success: true,
+            status: 201,
+        });
+    } catch (error) {
+        console.error("Error deleting project videos:", error);
         res.status(500).json({
             message: "Internal server error",
             success: false,
@@ -909,4 +1401,13 @@ export {
     getBanquets,
     deleteBanquet,
     updateBanquet,
+    addProjectAlbum,
+    addProjectVideo,
+    getProjectAlbums,
+    getProjectVideos,
+    deleteProjectVideos,
+    deleteProjectAlbums,
+    addAlbumPhotos,
+    getAlbumById,
+    deleteAlbumPhotos
 };
