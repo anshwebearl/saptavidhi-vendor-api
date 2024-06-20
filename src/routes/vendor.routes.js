@@ -11,6 +11,7 @@ import {
     deleteProjectAlbums,
     deleteProjectVideos,
     getAlbumById,
+    getBanquetById,
     getBanquets,
     getMenus,
     getProjectAlbums,
@@ -82,6 +83,7 @@ vendorRouter
     .route("/add-banquet/:id")
     .post(verifyToken, imageValidator, addBanquet);
 vendorRouter.route("/get-banquets/:id").get(verifyToken, getBanquets);
+vendorRouter.route("/get-banquet").get(verifyToken, getBanquetById);
 vendorRouter.route("/delete-banquet/:id").delete(verifyToken, deleteBanquet);
 vendorRouter
     .route("/update-banquet/:id")

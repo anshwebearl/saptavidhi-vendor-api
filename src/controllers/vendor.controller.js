@@ -1091,8 +1091,24 @@ const addBanquet = async (req, res) => {
         });
     }
 
-    const { title, banquet_type, fixed_capacity, max_capacity, state, city } =
-        req.body;
+    const {
+        property_name,
+        parking_capacity,
+        catering_policy,
+        decor_policy,
+        dj_policy,
+        banquet_type,
+        price_per_room,
+        space,
+        veg_price,
+        nonveg_price,
+        pincode,
+        fixed_capacity,
+        max_capacity,
+        state,
+        city,
+        address,
+    } = req.body;
 
     const cover_photo = req.files["cover_photo"][0].path;
     const additional_photos = req.files["additional_photos"].map(
@@ -1128,14 +1144,24 @@ const addBanquet = async (req, res) => {
 
         const newVenueBanquet = new VenueBanquet({
             vendor_id: id,
-            title,
+            property_name,
+            parking_capacity,
+            catering_policy,
+            decor_policy,
+            dj_policy,
             banquet_type,
+            price_per_room,
+            space,
+            veg_price,
+            nonveg_price,
+            pincode,
             fixed_capacity,
             max_capacity,
-            cover_photo,
-            additional_photos,
             state,
             city,
+            address,
+            cover_photo,
+            additional_photos,
         });
 
         await newVenueBanquet.save();
@@ -1192,6 +1218,54 @@ const getBanquets = async (req, res) => {
             success: true,
             message: "banquets fetched successfully",
             banquets: banquets,
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getBanquetById = async (req, res) => {
+    const { vendor_id, banquet_id } = req.query;
+
+    if (!vendor_id || !banquet_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id and banquet_id in query",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(vendor_id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor not found",
+            });
+        }
+
+        const banquet = await VenueBanquet.findById(banquet_id);
+
+        if (!banquet) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Banquets not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "banquet fetched successfully",
+            banquet: banquet,
         });
     } catch (error) {
         console.error("Error adding banquet:", error);
@@ -1285,16 +1359,24 @@ const updateBanquet = async (req, res) => {
     const { id } = req.params;
     const {
         banquet_id,
-        title,
+        property_name,
+        parking_capacity,
+        catering_policy,
+        decor_policy,
+        dj_policy,
         banquet_type,
+        price_per_room,
+        space,
+        veg_price,
+        nonveg_price,
+        pincode,
         fixed_capacity,
         max_capacity,
         state,
         city,
-        existing_cover_photo,
-        existing_additional_photos,
-        updated_additional_photos,
-        updated_cover_photo,
+        address,
+        cover_photo,
+        additional_photos,
     } = req.body;
 
     if (!id) {
@@ -1324,8 +1406,8 @@ const updateBanquet = async (req, res) => {
             });
         }
 
-        let cover_photo = existing_cover_photo;
-        let additional_photos = existing_additional_photos.split(",");
+        let coverPhoto = cover_photo;
+        let additionalPhotos = additional_photos;
 
         const deleteFile = (filePath) => {
             fs.unlink(filePath, (err) => {
@@ -1335,7 +1417,7 @@ const updateBanquet = async (req, res) => {
             });
         };
 
-        if (!existing_cover_photo) {
+        if (!cover_photo) {
             deleteFile(existingBanquet.cover_photo);
         }
 
@@ -1351,26 +1433,36 @@ const updateBanquet = async (req, res) => {
             req.files["updated_cover_photo"] &&
             req.files["updated_cover_photo"].length > 0
         ) {
-            cover_photo = req.files["updated_cover_photo"][0].path;
+            coverPhoto = req.files["updated_cover_photo"][0].path;
         }
 
         if (
             req.files["updated_additional_photos"] &&
             req.files["updated_additional_photos"].length > 0
         ) {
-            additional_photos = additional_photos.concat(
+            additionalPhotos = additional_photos.concat(
                 req.files["updated_additional_photos"].map((file) => file.path)
             );
         }
 
-        existingBanquet.title = title;
+        existingBanquet.property_name = property_name;
+        existingBanquet.parking_capacity = parking_capacity;
+        existingBanquet.catering_policy = catering_policy;
+        existingBanquet.decor_policy = decor_policy;
+        existingBanquet.dj_policy = dj_policy;
         existingBanquet.banquet_type = banquet_type;
+        existingBanquet.price_per_room = price_per_room;
+        existingBanquet.space = space;
+        existingBanquet.veg_price = veg_price;
+        existingBanquet.nonveg_price = nonveg_price;
+        existingBanquet.pincode = pincode;
         existingBanquet.fixed_capacity = fixed_capacity;
         existingBanquet.max_capacity = max_capacity;
         existingBanquet.state = state;
         existingBanquet.city = city;
-        existingBanquet.cover_photo = cover_photo;
-        existingBanquet.additional_photos = additional_photos;
+        existingBanquet.address = address;
+        existingBanquet.cover_photo = coverPhoto;
+        existingBanquet.additional_photos = additionalPhotos;
 
         await existingBanquet.save();
 
@@ -1399,6 +1491,7 @@ export {
     updateMenu,
     addBanquet,
     getBanquets,
+    getBanquetById,
     deleteBanquet,
     updateBanquet,
     addProjectAlbum,
@@ -1409,5 +1502,5 @@ export {
     deleteProjectAlbums,
     addAlbumPhotos,
     getAlbumById,
-    deleteAlbumPhotos
+    deleteAlbumPhotos,
 };

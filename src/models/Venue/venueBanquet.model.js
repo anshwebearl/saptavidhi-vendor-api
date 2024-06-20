@@ -7,7 +7,23 @@ const VenueBanquetSchema = new Schema(
             ref: "Vendor",
             required: true,
         },
-        title: {
+        property_name: {
+            type: String,
+            required: true,
+        },
+        parking_capacity: {
+            type: Number,
+            required: true,
+        },
+        catering_policy: {
+            type: String,
+            required: true,
+        },
+        decor_policy: {
+            type: String,
+            required: true,
+        },
+        dj_policy: {
             type: String,
             required: true,
         },
@@ -20,6 +36,26 @@ const VenueBanquetSchema = new Schema(
                 "Indoor & Outdoor",
                 "Terrace",
             ],
+            required: true,
+        },
+        price_per_room: {
+            type: Number,
+            required: true,
+        },
+        space: {
+            type: Number,
+            required: true,
+        },
+        veg_price: {
+            type: Number,
+            required: true,
+        },
+        nonveg_price: {
+            type: Number,
+            required: true,
+        },
+        pincode: {
+            type: Number,
             required: true,
         },
         state: {
@@ -43,6 +79,10 @@ const VenueBanquetSchema = new Schema(
         },
         additional_photos: {
             type: [String],
+        },
+        address: {
+            type: String,
+            required: true,
         },
     },
     { timestamps: true }
