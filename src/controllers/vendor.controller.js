@@ -924,6 +924,46 @@ const getMenus = async (req, res) => {
     }
 };
 
+const getMenuById = async (req, res) => {
+    const { vendor_id, menu_id } = req.query;
+
+    if (!vendor_id || !menu_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id and menu_id in query",
+        });
+    }
+
+    try {
+        const vendor = await Vendor.findById(vendor_id);
+
+        if (!vendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor not found",
+            });
+        }
+
+        const menu = await VenueMenu.findById(menu_id);
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "menu fetched successfully",
+            menu: menu,
+        });
+    } catch (error) {
+        console.error("Error getting menu: ", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 const deleteMenu = async (req, res) => {
     const { id } = req.params;
 
@@ -1503,4 +1543,5 @@ export {
     addAlbumPhotos,
     getAlbumById,
     deleteAlbumPhotos,
+    getMenuById,
 };

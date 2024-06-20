@@ -13,6 +13,7 @@ import {
     getAlbumById,
     getBanquetById,
     getBanquets,
+    getMenuById,
     getMenus,
     getProjectAlbums,
     getProjectVideos,
@@ -75,7 +76,8 @@ vendorRouter
 // VENUE
 // menu
 vendorRouter.route("/add-menu/:id").post(verifyToken, addMenu);
-vendorRouter.route("/get-menu/:id").get(verifyToken, getMenus);
+vendorRouter.route("/get-menus/:id").get(verifyToken, getMenus);
+vendorRouter.route("/get-menu").get(verifyToken, getMenuById);
 vendorRouter.route("/delete-menu/:id").delete(verifyToken, deleteMenu);
 vendorRouter.route("/update-menu/:id").put(verifyToken, updateMenu);
 // banquets
