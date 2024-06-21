@@ -19,7 +19,7 @@ const propertySchema = new Schema(
         },
         propertyType: {
             type: String,
-            enum: ["textInput", "radioButton","multiSelect"],
+            enum: ["textInput", "radioButton", "multiSelect"],
         },
         inputs: {
             type: [String],

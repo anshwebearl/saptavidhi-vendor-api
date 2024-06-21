@@ -6,6 +6,7 @@ import { VendorCategory } from "../models/vendorCategory.model.js";
 import { VenueMenu } from "../models/Venue/venueMenu.model.js";
 import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
 import { VendorProject } from "../models/vendorProject.model.js";
+import { PhotographerServices } from "../models/Photographer/photographerServices.model.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -107,6 +108,10 @@ const registerVendor = async (req, res) => {
 
         await VendorProject.create({ vendor_id: vendor._id });
 
+        if (vendor_type === "Photographers") {
+            await PhotographerServices.create({ vendor_id: vendor._id });
+        }
+
         const token = await generateToken(vendor._id);
         return res
             .status(201)
@@ -191,10 +196,15 @@ const getVendorDetails = async (req, res) => {
         });
     }
 
+    const vendorCategory = await VendorCategory.findById(
+        vendor.vendor_type
+    ).select("name");
+
     return res.status(200).json({
         success: true,
         status: 200,
         vendor: vendor,
+        category: vendorCategory,
     });
 };
 
@@ -1519,6 +1529,99 @@ const updateBanquet = async (req, res) => {
     }
 };
 
+// FOR VENDOR CATEGORY - PHOTOGRAPHY
+
+const addPhotographyServices = async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
+    let arrayData = Object.keys(data).map((key) => [key, data[key]]);
+    arrayData = arrayData.filter((item) => item[0] !== "decoded");
+
+    if (!id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id in params",
+        });
+    }
+
+    try {
+        const existingVendorService = await PhotographerServices.findOne({
+            vendor_id: id,
+        });
+
+        if (!existingVendorService) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Service not found",
+            });
+        }
+
+        for (let item of arrayData) {
+            existingVendorService[item[0]] = item[1];
+        }
+        await existingVendorService.save();
+
+        return res.status(201).json({
+            message: "service added successfully",
+            success: true,
+            status: 201,
+        });
+    } catch (error) {
+        console.error("Error adding service:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getPhotographyServices = async (req, res) => {
+    const { vendor_id } = req.query;
+
+    if (!vendor_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Provide vendor_id and service_id in query",
+        });
+    }
+
+    try {
+        const existingVendorService = await PhotographerServices.findOne({
+            vendor_id: vendor_id,
+        });
+
+        if (!existingVendorService) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Service not found",
+            });
+        }
+
+        return res.status(200).json({
+            message: "services fetched successfully",
+            success: true,
+            status: 200,
+            services: existingVendorService,
+        });
+    } catch (error) {
+        console.error("Error fetching service:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const updatePhotographyServices = async (req, res) => {
+    
+};
+
 export {
     registerVendor,
     loginVendor,
@@ -1544,4 +1647,6 @@ export {
     getAlbumById,
     deleteAlbumPhotos,
     getMenuById,
+    addPhotographyServices,
+    getPhotographyServices,
 };

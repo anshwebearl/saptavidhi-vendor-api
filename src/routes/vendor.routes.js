@@ -3,6 +3,7 @@ import {
     addAlbumPhotos,
     addBanquet,
     addMenu,
+    addPhotographyServices,
     addProjectAlbum,
     addProjectVideo,
     deleteAlbumPhotos,
@@ -15,6 +16,7 @@ import {
     getBanquets,
     getMenuById,
     getMenus,
+    getPhotographyServices,
     getProjectAlbums,
     getProjectVideos,
     getVendorDetails,
@@ -54,9 +56,7 @@ vendorRouter.route("/add-project-video/:id").post(verifyToken, addProjectVideo);
 vendorRouter
     .route("/get-project-albums/:id")
     .get(verifyToken, getProjectAlbums);
-vendorRouter
-    .route("/get-vendor-album")
-    .get(verifyToken, getAlbumById);
+vendorRouter.route("/get-vendor-album").get(verifyToken, getAlbumById);
 vendorRouter
     .route("/get-project-videos/:id")
     .get(verifyToken, getProjectVideos);
@@ -90,5 +90,12 @@ vendorRouter.route("/delete-banquet/:id").delete(verifyToken, deleteBanquet);
 vendorRouter
     .route("/update-banquet/:id")
     .put(verifyToken, updatedImageValidator, updateBanquet);
+
+// PHOTOGRAPHERS
+// services
+vendorRouter
+    .route("/add-services/:id")
+    .post(verifyToken, addPhotographyServices);
+vendorRouter.route("/get-services").get(verifyToken, getPhotographyServices);
 
 export default vendorRouter;
