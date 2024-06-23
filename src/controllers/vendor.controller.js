@@ -1457,7 +1457,7 @@ const updateBanquet = async (req, res) => {
         }
 
         let coverPhoto = cover_photo;
-        let additionalPhotos = additional_photos;
+        let additionalPhotos = additional_photos || [];
 
         const deleteFile = (filePath) => {
             fs.unlink(filePath, (err) => {
@@ -1471,13 +1471,19 @@ const updateBanquet = async (req, res) => {
             deleteFile(existingBanquet.cover_photo);
         }
 
-        const filesToDelete = existingBanquet.additional_photos.filter(
-            (photo) => !additional_photos.includes(photo)
-        );
+        if (!additional_photos) {
+            existingBanquet.additional_photos.forEach((filepath) => {
+                deleteFile(filepath);
+            });
+        } else {
+            const filesToDelete = existingBanquet.additional_photos.filter(
+                (photo) => !additional_photos.includes(photo)
+            );
 
-        filesToDelete.forEach((filePath) => {
-            deleteFile(filePath);
-        });
+            filesToDelete.forEach((filePath) => {
+                deleteFile(filePath);
+            });
+        }
 
         if (
             req.files["updated_cover_photo"] &&
@@ -1490,7 +1496,7 @@ const updateBanquet = async (req, res) => {
             req.files["updated_additional_photos"] &&
             req.files["updated_additional_photos"].length > 0
         ) {
-            additionalPhotos = additional_photos.concat(
+            additionalPhotos = additionalPhotos.concat(
                 req.files["updated_additional_photos"].map((file) => file.path)
             );
         }
@@ -1616,10 +1622,6 @@ const getPhotographyServices = async (req, res) => {
             status: 500,
         });
     }
-};
-
-const updatePhotographyServices = async (req, res) => {
-    
 };
 
 export {
