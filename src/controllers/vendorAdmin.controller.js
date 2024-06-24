@@ -567,32 +567,49 @@ const createVendorProperty = async (req, res) => {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: "provide vendor category id in params",
+            message: "Provide vendor category id in params",
         });
     }
 
     try {
-        const { propertyName, propertyDescription, propertyType, inputs } =
-            req.body;
+        const {
+            propertyName,
+            propertyDescription,
+            propertyType,
+            inputs,
+            multiSelectWithTextInputs,
+        } = req.body;
 
         if (!propertyName || !propertyDescription || !propertyType) {
             return res.status(400).json({
                 status: 400,
                 success: false,
                 message:
-                    "Please provide propertyName, propertyDescription, propertyType",
+                    "Please provide propertyName, propertyDescription, and propertyType",
             });
         }
 
         if (
             (propertyType === "radioButton" ||
-                propertyName === "multiSelect") &&
-            inputs.length === 0
+                propertyType === "multiSelect") &&
+            (!inputs || inputs.length === 0)
         ) {
             return res.status(400).json({
                 status: 400,
                 success: false,
                 message: "Please provide inputs",
+            });
+        }
+
+        if (
+            propertyType === "multiSelectWithText" &&
+            (!multiSelectWithTextInputs ||
+                multiSelectWithTextInputs.length === 0)
+        ) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Please provide multiSelectWithTextInputs",
             });
         }
 
@@ -606,15 +623,15 @@ const createVendorProperty = async (req, res) => {
             });
         }
 
-        const properyIndex = category.categoryProperties.findIndex(
+        const propertyIndex = category.categoryProperties.findIndex(
             (sub) => sub.propertyName === propertyName
         );
 
-        if (properyIndex !== -1) {
+        if (propertyIndex !== -1) {
             return res.status(409).json({
                 status: 409,
                 success: false,
-                message: "property already exists",
+                message: "Property already exists",
             });
         }
 
@@ -623,6 +640,7 @@ const createVendorProperty = async (req, res) => {
             propertyDescription,
             propertyType,
             inputs,
+            multiSelectWithTextInputs,
         });
         await category.save();
 
@@ -636,7 +654,11 @@ const createVendorProperty = async (req, res) => {
         for (let vendor of vendors) {
             vendor.additional_details.push({
                 _id: propertyId,
-                [propertyName]: propertyType === "multiSelect" ? [] : "",
+                [propertyName]:
+                    propertyType === "multiSelect" ||
+                    propertyType === "multiSelectWithText"
+                        ? []
+                        : "",
             });
             await vendor.save();
         }
@@ -738,39 +760,45 @@ const updateVendorProperty = async (req, res) => {
         propertyDescription,
         propertyType,
         inputs,
+        multiSelectWithTextInputs,
     } = req.body;
 
     if (!id) {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: "provide vendor property id in params",
+            message: "Provide vendor category id in params",
         });
     }
 
-    if (
-        !propertyId ||
-        !propertyName ||
-        !propertyDescription ||
-        !propertyType ||
-        !inputs
-    ) {
+    if (!propertyId || !propertyName || !propertyDescription || !propertyType) {
         return res.status(400).json({
             status: 400,
             success: false,
             message:
-                "propertyId, propertyName, propertyDescription, propertyType  is required",
+                "propertyId, propertyName, propertyDescription, and propertyType are required",
         });
     }
 
     if (
-        (propertyType === "radioButton" || propertyName === "multiSelect") &&
-        inputs.length === 0
+        (propertyType === "radioButton" || propertyType === "multiSelect") &&
+        (!inputs || inputs.length === 0)
     ) {
         return res.status(400).json({
             status: 400,
             success: false,
             message: "Please provide inputs",
+        });
+    }
+
+    if (
+        propertyType === "multiSelectWithText" &&
+        (!multiSelectWithTextInputs || multiSelectWithTextInputs.length === 0)
+    ) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide multiSelectWithTextInputs",
         });
     }
 
@@ -792,17 +820,17 @@ const updateVendorProperty = async (req, res) => {
             return res.status(404).json({
                 status: 404,
                 success: false,
-                message: "property not found",
+                message: "Property not found",
             });
         }
 
-        // Preserve the _id field
         vendorCategory.categoryProperties[propertyIndex] = {
-            _id: vendorCategory.categoryProperties[propertyIndex]._id,
+            _id: propertyId,
             propertyName,
             propertyDescription,
             propertyType,
             inputs,
+            multiSelectWithTextInputs,
         };
 
         await vendorCategory.save();
@@ -814,7 +842,6 @@ const updateVendorProperty = async (req, res) => {
                 (detail) => detail._id.toString() === propertyId
             );
             if (detailIndex !== -1) {
-                // Update the propertyName while preserving the value
                 const currentDetail = vendor.additional_details[detailIndex];
                 const currentValue =
                     currentDetail[
@@ -832,7 +859,7 @@ const updateVendorProperty = async (req, res) => {
         return res.status(200).json({
             status: 200,
             success: true,
-            message: "property updated successfully",
+            message: "Property updated successfully",
         });
     } catch (error) {
         console.error("Error updating property:", error);
@@ -969,7 +996,7 @@ const getBanquets = async (req, res) => {
             status: 500,
         });
     }
-}
+};
 
 export {
     // registerVendorAdmin,
@@ -989,5 +1016,5 @@ export {
     updateVendorProperty,
     getMenus,
     getBanquets,
-    getProjects
+    getProjects,
 };
