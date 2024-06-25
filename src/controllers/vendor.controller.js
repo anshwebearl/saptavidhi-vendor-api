@@ -1147,17 +1147,15 @@ const addBanquet = async (req, res) => {
         catering_policy,
         decor_policy,
         dj_policy,
-        banquet_type,
         price_per_room,
         space,
         veg_price,
         nonveg_price,
         pincode,
-        fixed_capacity,
-        max_capacity,
         state,
         city,
         address,
+        available_spaces,
     } = req.body;
 
     const cover_photo = req.files["cover_photo"][0].path;
@@ -1199,19 +1197,17 @@ const addBanquet = async (req, res) => {
             catering_policy,
             decor_policy,
             dj_policy,
-            banquet_type,
             price_per_room,
             space,
             veg_price,
             nonveg_price,
             pincode,
-            fixed_capacity,
-            max_capacity,
             state,
             city,
             address,
             cover_photo,
             additional_photos,
+            available_spaces: JSON.parse(available_spaces),
         });
 
         await newVenueBanquet.save();
@@ -1414,19 +1410,17 @@ const updateBanquet = async (req, res) => {
         catering_policy,
         decor_policy,
         dj_policy,
-        banquet_type,
         price_per_room,
         space,
         veg_price,
         nonveg_price,
         pincode,
-        fixed_capacity,
-        max_capacity,
         state,
         city,
         address,
         cover_photo,
         additional_photos,
+        available_spaces,
     } = req.body;
 
     if (!id) {
@@ -1506,19 +1500,17 @@ const updateBanquet = async (req, res) => {
         existingBanquet.catering_policy = catering_policy;
         existingBanquet.decor_policy = decor_policy;
         existingBanquet.dj_policy = dj_policy;
-        existingBanquet.banquet_type = banquet_type;
         existingBanquet.price_per_room = price_per_room;
         existingBanquet.space = space;
         existingBanquet.veg_price = veg_price;
         existingBanquet.nonveg_price = nonveg_price;
         existingBanquet.pincode = pincode;
-        existingBanquet.fixed_capacity = fixed_capacity;
-        existingBanquet.max_capacity = max_capacity;
         existingBanquet.state = state;
         existingBanquet.city = city;
         existingBanquet.address = address;
         existingBanquet.cover_photo = coverPhoto;
         existingBanquet.additional_photos = additionalPhotos;
+        existingBanquet.available_spaces = JSON.parse(available_spaces);
 
         await existingBanquet.save();
 

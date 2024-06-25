@@ -27,17 +27,17 @@ const VenueBanquetSchema = new Schema(
             type: String,
             required: true,
         },
-        banquet_type: {
-            type: String,
-            enum: [
-                "Indoor",
-                "Outdoor",
-                "Poolside",
-                "Indoor & Outdoor",
-                "Terrace",
-            ],
-            required: true,
-        },
+        // banquet_type: {
+        //     type: String,
+        //     enum: [
+        //         "Indoor",
+        //         "Outdoor",
+        //         "Poolside",
+        //         "Indoor & Outdoor",
+        //         "Terrace",
+        //     ],
+        //     required: true,
+        // },
         price_per_room: {
             type: Number,
             required: true,
@@ -66,14 +66,14 @@ const VenueBanquetSchema = new Schema(
             type: String,
             required: true,
         },
-        fixed_capacity: {
-            type: Number,
-            required: true,
-        },
-        max_capacity: {
-            type: Number,
-            required: true,
-        },
+        // fixed_capacity: {
+        //     type: Number,
+        //     required: true,
+        // },
+        // max_capacity: {
+        //     type: Number,
+        //     required: true,
+        // },
         cover_photo: {
             type: String,
         },
@@ -83,6 +83,35 @@ const VenueBanquetSchema = new Schema(
         address: {
             type: String,
             required: true,
+        },
+        available_spaces: {
+            type: [
+                {
+                    space_name: {
+                        type: String,
+                        required: true,
+                    },
+                    space_type: {
+                        type: String,
+                        enum: [
+                            "Indoor",
+                            "Outdoor",
+                            "Poolside",
+                            "Indoor & Outdoor",
+                            "Terrace",
+                        ],
+                        required: true,
+                    },
+                    fixed_capacity: {
+                        type: Number,
+                        required: true,
+                    },
+                    max_capacity: {
+                        type: Number,
+                        required: true,
+                    },
+                },
+            ],
         },
     },
     { timestamps: true }
