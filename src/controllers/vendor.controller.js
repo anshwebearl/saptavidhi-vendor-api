@@ -183,7 +183,7 @@ const loginVendor = async (req, res) => {
     );
 };
 
-const getVendorDetails = async (req, res) => {
+const getVendorCategory = async (req, res) => {
     const { _id } = req.body.decoded;
 
     const vendor = await Vendor.findById({ _id }).select("-password");
@@ -324,6 +324,89 @@ const updateAdditionalDetails = async (req, res) => {
             message: "Internal server error",
             success: false,
             status: 500,
+        });
+    }
+};
+
+const getVendorById = async (req, res) => {
+    const { id } = req.query;
+
+    if (!id || id.trim() === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "id is required in the query.",
+        });
+    }
+
+    try {
+        const existingVendor = await Vendor.findById(id).select("-password");
+
+        if (!existingVendor) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "vendor not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "vendor fetched successfully",
+            vendor: existingVendor,
+        });
+    } catch (error) {
+        console.log("error fetching vendor: ", error);
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: "internal server error",
+        });
+    }
+};
+
+// get vendors by category
+const getVendorsByCategory = async (req, res) => {
+    const { vendor_category } = req.query;
+
+    if (!vendor_category || vendor_category.trim() === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_category in query",
+        });
+    }
+
+    try {
+        const existingVendorCategory = await VendorCategory.findOne({
+            name: vendor_category,
+        });
+
+        if (!existingVendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "invalid vendor category",
+            });
+        }
+
+        const vendorList = await Vendor.find({
+            vendor_type: existingVendorCategory._id,
+        });
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "vendors fetched successfully",
+            vendorList: vendorList,
+        });
+    } catch (error) {
+        console.log("error fetching vendors: ", error);
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: "internal server error",
         });
     }
 };
@@ -817,6 +900,45 @@ const deleteProjectVideos = async (req, res) => {
     }
 };
 
+const getVendorProject = async (req, res) => {
+    const { vendor_id } = req.query;
+
+    if (!vendor_id || vendor_id.trim() === "") {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "vendor_id is required",
+        });
+    }
+
+    try {
+        const existingProject = await VendorProject.findOne({
+            vendor_id: vendor_id,
+        });
+
+        if (!existingProject) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "project not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "project fetched successfully",
+            project: existingProject,
+        });
+    } catch (error) {
+        console.log("error fetching project: ", error);
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: "internal server error",
+        });
+    }
+};
 // FOR VENDOR CATEGORY - VENUE
 
 // MENU
@@ -1144,9 +1266,9 @@ const addBanquet = async (req, res) => {
     const {
         property_name,
         parking_capacity,
-        catering_policy,
-        decor_policy,
-        dj_policy,
+        banquet_type,
+        guest_count,
+        room_count,
         price_per_room,
         space,
         veg_price,
@@ -1194,9 +1316,9 @@ const addBanquet = async (req, res) => {
             vendor_id: id,
             property_name,
             parking_capacity,
-            catering_policy,
-            decor_policy,
-            dj_policy,
+            banquet_type,
+            guest_count,
+            room_count,
             price_per_room,
             space,
             veg_price,
@@ -1276,27 +1398,17 @@ const getBanquets = async (req, res) => {
 };
 
 const getBanquetById = async (req, res) => {
-    const { vendor_id, banquet_id } = req.query;
+    const { banquet_id } = req.query;
 
-    if (!vendor_id || !banquet_id) {
+    if (!banquet_id) {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: "Provide vendor_id and banquet_id in query",
+            message: "Provide banquet_id in query",
         });
     }
 
     try {
-        const vendor = await Vendor.findById(vendor_id);
-
-        if (!vendor) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: "Vendor not found",
-            });
-        }
-
         const banquet = await VenueBanquet.findById(banquet_id);
 
         if (!banquet) {
@@ -1407,9 +1519,9 @@ const updateBanquet = async (req, res) => {
         banquet_id,
         property_name,
         parking_capacity,
-        catering_policy,
-        decor_policy,
-        dj_policy,
+        banquet_type,
+        guest_count,
+        room_count,
         price_per_room,
         space,
         veg_price,
@@ -1497,9 +1609,9 @@ const updateBanquet = async (req, res) => {
 
         existingBanquet.property_name = property_name;
         existingBanquet.parking_capacity = parking_capacity;
-        existingBanquet.catering_policy = catering_policy;
-        existingBanquet.decor_policy = decor_policy;
-        existingBanquet.dj_policy = dj_policy;
+        existingBanquet.banquet_type = banquet_type;
+        existingBanquet.guest_count = guest_count;
+        existingBanquet.room_count = room_count;
         existingBanquet.price_per_room = price_per_room;
         existingBanquet.space = space;
         existingBanquet.veg_price = veg_price;
@@ -1521,6 +1633,141 @@ const updateBanquet = async (req, res) => {
     } catch (error) {
         console.error("Error updating banquet:", error);
         return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
+    }
+};
+
+const getAllBanquets = async (req, res) => {
+    const { page } = req.query || 0;
+
+    if (!page || page.trim() === "") {
+    }
+
+    try {
+        const banquets = await VenueBanquet.find();
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "banquets fetched successfully",
+            banquets: banquets,
+        });
+    } catch (error) {
+        console.error("Error adding banquet:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const banquetsPagination = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const guest_count = req.query.guest_count || "";
+    const room_count = req.query.room_count || "";
+    const plate_price = req.query.plate_price || "";
+    const venue_type = req.query.venue_type || "";
+    const space_type = req.query.space || "";
+
+    const startIndex = (page - 1) * limit;
+
+    const filter = {};
+
+    if (guest_count) {
+        const [min, max] = guest_count.split("-");
+        if (max) {
+            filter.guest_count = {
+                ...{ $gte: parseInt(min) },
+                ...{ $lte: parseInt(max) },
+            };
+        } else {
+            if (min[0] === "<") {
+                filter.guest_count = {
+                    ...{ $lt: parseInt(min.replace("<", "")) },
+                };
+            } else {
+                filter.guest_count = {
+                    ...{ $gt: parseInt(min.replace(">", "")) },
+                };
+            }
+        }
+    }
+
+    if (room_count) {
+        const [min, max] = room_count.split("-");
+        if (max) {
+            filter.room_count = {
+                ...{ $gte: parseInt(min) },
+                ...{ $lte: parseInt(max) },
+            };
+        } else {
+            if (min[0] === "<") {
+                filter.room_count = {
+                    ...{ $lt: parseInt(min.replace("<", "")) },
+                };
+            } else {
+                filter.room_count = {
+                    ...{ $gt: parseInt(min.replace(">", "")) },
+                };
+            }
+        }
+    }
+
+    if (plate_price) {
+        const [min, max] = plate_price.split("-");
+        if (max) {
+            filter.veg_price = {
+                ...{ $gte: parseInt(min) },
+                ...{ $lte: parseInt(max) },
+            };
+        } else {
+            if (min[0] === "<") {
+                filter.veg_price = {
+                    ...{ $lt: parseInt(min.replace("<", "")) },
+                };
+            } else {
+                filter.veg_price = {
+                    ...{ $gt: parseInt(min.replace(">", "")) },
+                };
+            }
+        }
+    }
+
+    if (venue_type) {
+        filter.banquet_type = venue_type;
+    }
+
+    if (space_type) {
+        filter["available_spaces.space_type"] = space_type;
+    }
+
+    try {
+        const banquets = await VenueBanquet.find(filter)
+            .limit(limit)
+            .skip(startIndex)
+            .exec();
+        const count = await VenueBanquet.countDocuments(filter);
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Fetched banquets successfully",
+            data: {
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(count / limit),
+                totalCount: count,
+                banquets: banquets,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 500,
             success: false,
             message: "Internal server error",
         });
@@ -1619,7 +1866,7 @@ const getPhotographyServices = async (req, res) => {
 export {
     registerVendor,
     loginVendor,
-    getVendorDetails,
+    getVendorCategory,
     updateVendor,
     updateAdditionalDetails,
     addMenu,
@@ -1628,6 +1875,8 @@ export {
     updateMenu,
     addBanquet,
     getBanquets,
+    getAllBanquets,
+    banquetsPagination,
     getBanquetById,
     deleteBanquet,
     updateBanquet,
@@ -1643,4 +1892,7 @@ export {
     getMenuById,
     addPhotographyServices,
     getPhotographyServices,
+    getVendorById,
+    getVendorProject,
+    getVendorsByCategory,
 };

@@ -15,16 +15,45 @@ const VenueBanquetSchema = new Schema(
             type: Number,
             required: true,
         },
-        catering_policy: {
+        // catering_policy: {
+        //     type: String,
+        //     required: true,
+        // },
+        // decor_policy: {
+        //     type: String,
+        //     required: true,
+        // },
+        // dj_policy: {
+        //     type: String,
+        //     required: true,
+        // },
+        banquet_type: {
             type: String,
+            enum: [
+                "4 Star & Above Wedding Hotels",
+                "Banquet Halls",
+                "Lawns / Farmhouses",
+                "3 Star Hotels with Banquets",
+                "Country / Golf Club",
+                "Wedding Resorts",
+                "Party Restaurants / Lounge Bars",
+                "Forts / Palaces For Wedding",
+                "Destination Wedding Venues",
+                "Kalyana Mandapams",
+                "Small Function / Party Halls",
+                "Venues With Rooms",
+                "5 Star Luxury Wedding Hotels",
+                "Temple Wedding Venues",
+                "Convention / Function Halls",
+            ],
             required: true,
         },
-        decor_policy: {
-            type: String,
+        guest_count: {
+            type: Number,
             required: true,
         },
-        dj_policy: {
-            type: String,
+        room_count: {
+            type: Number,
             required: true,
         },
         // banquet_type: {

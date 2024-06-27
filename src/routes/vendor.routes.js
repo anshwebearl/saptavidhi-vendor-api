@@ -6,12 +6,14 @@ import {
     addPhotographyServices,
     addProjectAlbum,
     addProjectVideo,
+    banquetsPagination,
     deleteAlbumPhotos,
     deleteBanquet,
     deleteMenu,
     deleteProjectAlbums,
     deleteProjectVideos,
     getAlbumById,
+    getAllBanquets,
     getBanquetById,
     getBanquets,
     getMenuById,
@@ -19,7 +21,10 @@ import {
     getPhotographyServices,
     getProjectAlbums,
     getProjectVideos,
-    getVendorDetails,
+    getVendorById,
+    getVendorCategory,
+    getVendorProject,
+    getVendorsByCategory,
     loginVendor,
     registerVendor,
     updateAdditionalDetails,
@@ -41,14 +46,21 @@ vendorRouter.route("/signup").post(registerVendor);
 vendorRouter.route("/login").post(loginVendor);
 
 //protected routes
-vendorRouter.route("/getvendors").get(verifyToken, getVendorDetails);
+vendorRouter.route("/getvendors").get(verifyToken, getVendorCategory);
 vendorRouter.route("/updatevendor/:id").patch(verifyToken, updateVendor);
 vendorRouter
     .route("/update-additional-details/:id")
     .put(verifyToken, updateAdditionalDetails);
+vendorRouter.route("/get-vendor").get(getVendorById);
+
+// get vendors by category
+vendorRouter
+    .route("/get-vendors-category")
+    .get(verifyToken, getVendorsByCategory);
 
 // COMMON FUNCTIONALITY
 // projects
+vendorRouter.route("/get-project").get(getVendorProject);
 vendorRouter
     .route("/add-project-album/:id")
     .post(verifyToken, projectValidator, addProjectAlbum);
@@ -85,11 +97,13 @@ vendorRouter
     .route("/add-banquet/:id")
     .post(verifyToken, imageValidator, addBanquet);
 vendorRouter.route("/get-banquets/:id").get(verifyToken, getBanquets);
-vendorRouter.route("/get-banquet").get(verifyToken, getBanquetById);
+vendorRouter.route("/get-banquet").get(getBanquetById);
 vendorRouter.route("/delete-banquet/:id").delete(verifyToken, deleteBanquet);
 vendorRouter
     .route("/update-banquet/:id")
     .put(verifyToken, updatedImageValidator, updateBanquet);
+vendorRouter.route("/get-all-banquets").get(getAllBanquets);
+vendorRouter.route("/banquets-pagination").get(banquetsPagination);
 
 // PHOTOGRAPHERS
 // services
