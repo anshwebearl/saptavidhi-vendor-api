@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    VendorPagination,
     addAlbumPhotos,
     addBanquet,
     addMenu,
@@ -52,6 +53,7 @@ vendorRouter
     .route("/update-additional-details/:id")
     .put(verifyToken, updateAdditionalDetails);
 vendorRouter.route("/get-vendor").get(getVendorById);
+vendorRouter.route("/vendor-pagination").get(VendorPagination);
 
 // get vendors by category
 vendorRouter

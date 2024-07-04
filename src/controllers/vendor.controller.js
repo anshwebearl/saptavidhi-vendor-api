@@ -7,6 +7,7 @@ import { VenueMenu } from "../models/Venue/venueMenu.model.js";
 import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
 import { VendorProject } from "../models/vendorProject.model.js";
 import { PhotographerServices } from "../models/Photographer/photographerServices.model.js";
+import mongoose from "mongoose";
 
 const registerVendor = async (req, res) => {
     try {
@@ -80,8 +81,6 @@ const registerVendor = async (req, res) => {
                 [el.propertyName]: el.propertyType === "multiSelect" ? [] : "",
             });
         });
-
-        console.log(additional_details);
 
         const vendor = await Vendor.create({
             brand_name,
@@ -407,6 +406,133 @@ const getVendorsByCategory = async (req, res) => {
             status: 500,
             success: false,
             message: "internal server error",
+        });
+    }
+};
+
+const VendorPagination = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const vendorType = req.query.vendorType || "";
+
+    const startIndex = (page - 1) * limit;
+
+    try {
+        const vendorCategory = await VendorCategory.findOne({
+            name: vendorType,
+        });
+
+        if (!vendorCategory) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Vendor category not found",
+            });
+        }
+
+        const vendorCategoryId = vendorCategory._id;
+
+        const aggregationPipeline = [
+            {
+                $match: {
+                    vendor_type: new mongoose.Types.ObjectId(vendorCategoryId),
+                },
+            },
+            {
+                $lookup: {
+                    from: "vendorprojects",
+                    localField: "_id",
+                    foreignField: "vendor_id",
+                    as: "vendor_projects",
+                },
+            },
+            {
+                $unwind: {
+                    path: "$vendor_projects",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $addFields: {
+                    cover_photo: {
+                        $arrayElemAt: [
+                            {
+                                $arrayElemAt: [
+                                    "$vendor_projects.albums.photos",
+                                    0,
+                                ],
+                            },
+                            0,
+                        ],
+                    },
+                },
+            },
+            {
+                $skip: startIndex,
+            },
+            {
+                $limit: limit,
+            },
+            {
+                $project: {
+                    _id: 1,
+                    brand_name: 1,
+                    contact_person_name: 1,
+                    email: 1,
+                    pincode: 1,
+                    mobile_number: 1,
+                    address: 1,
+                    state: 1,
+                    city: 1,
+                    vendor_type: 1,
+                    additional_details: 1,
+                    domain: 1,
+                    additional_email: 1,
+                    website_link: 1,
+                    facebook_url: 1,
+                    instagram_url: 1,
+                    additional_info: 1,
+                    status: 1,
+                    cover_photo: 1,
+                },
+            },
+        ];
+
+        const vendors = await Vendor.aggregate(aggregationPipeline);
+
+        const countPipeline = [
+            {
+                $match: {
+                    vendor_type: new mongoose.Types.ObjectId(vendorCategoryId),
+                },
+            },
+            {
+                $count: "totalCount",
+            },
+        ];
+
+        const countResult = await Vendor.aggregate(countPipeline);
+        const totalCount =
+            countResult.length > 0 ? countResult[0].totalCount : 0;
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Fetched vendors successfully",
+            data: {
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(totalCount / limit),
+                totalCount: totalCount,
+                vendors: vendors,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Internal server error",
         });
     }
 };
@@ -1868,6 +1994,7 @@ export {
     loginVendor,
     getVendorCategory,
     updateVendor,
+    VendorPagination,
     updateAdditionalDetails,
     addMenu,
     getMenus,
