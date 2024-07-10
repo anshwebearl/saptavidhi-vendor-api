@@ -17,6 +17,11 @@ import {
     updateVendorSubCategory,
     getMenus,
     getProjects,
+    addMembershipPlan,
+    getAllMembershipPlans,
+    deleteMembershipPlan,
+    getMembershipById,
+    updateMembershipPlans,
     // registerVendorAdmin,
 } from "../controllers/vendorAdmin.controller.js";
 import verifyToken from "../middlewares/verifyToken.js";
@@ -79,5 +84,18 @@ vendorAdminRouter.route("/get-projects/:id").get(verifyToken, getProjects);
 // vendor category - Venues
 vendorAdminRouter.route("/get-menu/:id").get(verifyToken, getMenus);
 vendorAdminRouter.route("/get-banquet/:id").get(verifyToken, getBanquets);
+
+// membership plans
+vendorAdminRouter.route("/add-membership").post(verifyToken, addMembershipPlan);
+vendorAdminRouter
+    .route("/get-all-memberships")
+    .get(verifyToken, getAllMembershipPlans);
+vendorAdminRouter
+    .route("/delete-membership")
+    .delete(verifyToken, deleteMembershipPlan);
+vendorAdminRouter.route("/get-membership").get(verifyToken, getMembershipById);
+vendorAdminRouter
+    .route("/update-membership")
+    .put(verifyToken, updateMembershipPlans);
 
 export default vendorAdminRouter;

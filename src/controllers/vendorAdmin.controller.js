@@ -6,6 +6,7 @@ import { VendorCategory } from "../models/vendorCategory.model.js";
 import mongoose from "mongoose";
 import { VenueMenu } from "../models/Venue/venueMenu.model.js";
 import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
+import { MembershipPlan } from "../models/membershipPlans.models.js";
 
 // const registerVendorAdmin = async (req, res) => {
 //     try {
@@ -871,6 +872,199 @@ const updateVendorProperty = async (req, res) => {
     }
 };
 
+// MEMBERSHIP PLANS
+const addMembershipPlan = async (req, res) => {
+    const { membership_category, price, features } = req.body;
+
+    if (!membership_category || !price || !features) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "Please provide membership_category, price, and features in the request body",
+        });
+    }
+
+    try {
+        const parsedFeatures = features.map((feature) => ({
+            _id: new mongoose.Types.ObjectId(),
+            name: feature,
+        }));
+
+        const membership = await MembershipPlan.create({
+            membership_category,
+            price,
+            features: parsedFeatures,
+        });
+
+        return res.status(201).json({
+            status: 201,
+            message: "Membership added successfully",
+            success: true,
+            data: membership,
+        });
+    } catch (error) {
+        console.error("Error adding membership plans:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
+const getAllMembershipPlans = async (req, res) => {
+    try {
+        const membershipPlans = await MembershipPlan.find();
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: membershipPlans,
+        });
+    } catch (error) {
+        console.log("error fetching membership plans: ", error);
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: "internal server error",
+        });
+    }
+};
+
+const deleteMembershipPlan = async (req, res) => {
+    const { membership_id } = req.query;
+
+    if (!membership_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide membership_id in request query.",
+        });
+    }
+
+    try {
+        const deletedMembership = await MembershipPlan.findByIdAndDelete(
+            membership_id
+        );
+
+        if (!deletedMembership) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "membership not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "membership deleted successfully",
+        });
+    } catch (error) {
+        console.log("error deleting membership: ", error);
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            message: "internal server error",
+        });
+    }
+};
+
+const getMembershipById = async (req, res) => {
+    const { membership_id } = req.query;
+
+    if (!membership_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide membership_id in request query.",
+        });
+    }
+
+    try {
+        const existingMembershipPlan = await MembershipPlan.findById(
+            membership_id
+        );
+
+        if (!existingMembershipPlan) {
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "membership not found",
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "membership fetched successfully",
+            data: existingMembershipPlan,
+        });
+    } catch (error) {
+        console.log("error deleting membership: ", error);
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            message: "internal server error",
+        });
+    }
+};
+
+const updateMembershipPlans = async (req, res) => {
+    const { membership_category, price, features } = req.body;
+
+    const { membership_id } = req.query;
+
+    if (!membership_category || !price || !features) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message:
+                "Please provide membership_category, price, and features in the request body",
+        });
+    }
+
+    if (!membership_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Please provide membership_id in the request query",
+        });
+    }
+
+    try {
+        const parsedFeatures = features.map((feature) => ({
+            _id: new mongoose.Types.ObjectId(),
+            name: feature,
+        }));
+
+        const membership = await MembershipPlan.findByIdAndUpdate(
+            membership_id,
+            {
+                $set: {
+                    membership_category: membership_category,
+                    price: price,
+                    features: parsedFeatures,
+                },
+            }
+        );
+
+        return res.status(201).json({
+            status: 201,
+            message: "Membership updated successfully",
+            success: true,
+            data: membership,
+        });
+    } catch (error) {
+        console.error("Error adding membership plans:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 // COMMON FUNCTIONALITY
 const getProjects = async (req, res) => {
     const { id } = req.params;
@@ -1017,4 +1211,9 @@ export {
     getMenus,
     getBanquets,
     getProjects,
+    addMembershipPlan,
+    getAllMembershipPlans,
+    deleteMembershipPlan,
+    getMembershipById,
+    updateMembershipPlans,
 };
