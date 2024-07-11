@@ -22,6 +22,7 @@ import {
     getPhotographyServices,
     getProjectAlbums,
     getProjectVideos,
+    getUserMembershipPlan,
     getVendorById,
     getVendorCategory,
     getVendorProject,
@@ -113,5 +114,10 @@ vendorRouter
     .route("/add-services/:id")
     .post(verifyToken, addPhotographyServices);
 vendorRouter.route("/get-services").get(verifyToken, getPhotographyServices);
+
+// MEMBERSHIP PLANS
+vendorRouter
+    .route("/get-membership-details")
+    .get(verifyToken, getUserMembershipPlan);
 
 export default vendorRouter;

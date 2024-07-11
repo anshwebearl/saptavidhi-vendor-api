@@ -874,14 +874,14 @@ const updateVendorProperty = async (req, res) => {
 
 // MEMBERSHIP PLANS
 const addMembershipPlan = async (req, res) => {
-    const { membership_category, price, features } = req.body;
+    const { membership_category, price, features, plan_days } = req.body;
 
-    if (!membership_category || !price || !features) {
+    if (!membership_category || !price || !features || !plan_days) {
         return res.status(400).json({
             status: 400,
             success: false,
             message:
-                "Please provide membership_category, price, and features in the request body",
+                "Please provide plan_days, membership_category, price, and features in the request body",
         });
     }
 
@@ -894,6 +894,7 @@ const addMembershipPlan = async (req, res) => {
         const membership = await MembershipPlan.create({
             membership_category,
             price,
+            plan_days: plan_days,
             features: parsedFeatures,
         });
 
@@ -1011,16 +1012,16 @@ const getMembershipById = async (req, res) => {
 };
 
 const updateMembershipPlans = async (req, res) => {
-    const { membership_category, price, features } = req.body;
+    const { membership_category, price, features, plan_days } = req.body;
 
     const { membership_id } = req.query;
 
-    if (!membership_category || !price || !features) {
+    if (!membership_category || !price || !features || !plan_days) {
         return res.status(400).json({
             status: 400,
             success: false,
             message:
-                "Please provide membership_category, price, and features in the request body",
+                "Please provide plan_days, membership_category, price, and features in the request body",
         });
     }
 
@@ -1045,6 +1046,7 @@ const updateMembershipPlans = async (req, res) => {
                     membership_category: membership_category,
                     price: price,
                     features: parsedFeatures,
+                    plan_days: plan_days,
                 },
             }
         );

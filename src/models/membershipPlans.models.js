@@ -10,6 +10,10 @@ const MembershipPlanSchema = new Schema(
             type: Number,
             required: true,
         },
+        plan_days: {
+            type: Number,
+            required: true,
+        },
         features: {
             type: [
                 {

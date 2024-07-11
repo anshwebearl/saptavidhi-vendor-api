@@ -8,6 +8,8 @@ import { VenueBanquet } from "../models/Venue/venueBanquet.model.js";
 import { VendorProject } from "../models/vendorProject.model.js";
 import { PhotographerServices } from "../models/Photographer/photographerServices.model.js";
 import mongoose from "mongoose";
+import { Booking } from "../models/booking.models.js";
+import { MembershipPlan } from "../models/membershipPlans.models.js";
 
 const registerVendor = async (req, res) => {
     try {
@@ -1989,6 +1991,69 @@ const getPhotographyServices = async (req, res) => {
     }
 };
 
+// FOR MEMBERDHIP PLANS
+const getUserMembershipPlan = async (req, res) => {
+    const { vendor_id } = req.query;
+
+    if (!vendor_id) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "provide vendor_id in request query",
+        });
+    }
+
+    try {
+        const existingBooking = await Booking.findOne({ vendor_id: vendor_id });
+
+        if (!existingBooking) {
+            return res.status(404).json({
+                message: "No Bookings found.",
+                success: false,
+                status: 404,
+            });
+        }
+
+        const bookingDate = new Date(existingBooking.createdAt);
+        const lastDate = new Date(bookingDate);
+        lastDate.setDate(bookingDate.getDate() + existingBooking.plan_days);
+
+        const currentDate = new Date();
+        const daysRemaining = Math.floor(
+            (lastDate - currentDate) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysRemaining <= 0) {
+            return res.status(401).json({
+                status: 401,
+                success: false,
+                message: "Package Expired",
+            });
+        }
+
+        const existingMembership = await MembershipPlan.findById(
+            existingBooking.membership_id
+        );
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            data: {
+                membership: existingMembership,
+                booking: existingBooking,
+                days_remaining: daysRemaining,
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching plans:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            status: 500,
+        });
+    }
+};
+
 export {
     registerVendor,
     loginVendor,
@@ -2022,4 +2087,5 @@ export {
     getVendorById,
     getVendorProject,
     getVendorsByCategory,
+    getUserMembershipPlan,
 };

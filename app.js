@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import vendorRouter from "./src/routes/vendor.routes.js";
 import vendorAdminRouter from "./src/routes/vendorAdmin.routes.js";
 import vendorCategoryRouter from "./src/routes/vendorCategory.routes.js";
+import membershipRouter from "./src/routes/membership.routes.js";
+import paymentRouter from "./src/routes/payment.routes.js";
 
 dotenv.config({
     path: "./.env",
@@ -22,6 +24,8 @@ app.use("/uploads", express.static("./uploads"));
 app.use("/api/vendor", vendorRouter);
 app.use("/api/admin", vendorAdminRouter);
 app.use("/api/vendor-category", vendorCategoryRouter);
+app.use("/api/membership-plans", membershipRouter);
+app.use("/api/payment", paymentRouter);
 
 app.get("/", (req, res) => {
     return res.status(200).json({
