@@ -185,6 +185,7 @@ const getPaymentStatus = async (req, res) => {
             if (!existingBooking) {
                 const booking = await Booking.create({
                     vendor_id: existsingTransaction.vendor_id,
+
                     transaction_id: existsingTransaction._id,
                     membership_id: existsingTransaction.membership_id,
                     amount: existsingTransaction.amount,
@@ -192,19 +193,27 @@ const getPaymentStatus = async (req, res) => {
                 });
             }
 
-            return res.status(201).json({   
+            return res.status(201).json({
                 success: true,
                 status: 201,
                 data: response.data,
             });
         } else {
-            existsingTransaction.status("FAILURE");
-            await existsingTransaction.save();
-            return res.status(400).json({
-                success: false,
-                status: 400,
-                message: response.data.message,
-            });
+            if (existsingTransaction.status !== "SUCCESS") {
+                existsingTransaction.status = "FAILURE";
+                await existsingTransaction.save();
+                return res.status(400).json({
+                    success: false,
+                    status: 400,
+                    message: response.data.message,
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    status: 404,
+                    message: "link expired",
+                });
+            }
         }
     } catch (error) {
         existsingTransaction.status = "FAILURE";
