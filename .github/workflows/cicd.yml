@@ -25,7 +25,7 @@ jobs:
       - name: Pull image from dockerhub
         run: docker pull saulgoodman13/node-backend:latest
       - name: Run docker container
-        run: docker run -p 4000:8000 \
+        run: docker run -d -p 4000:8000 \
             --name nodejs-app-container \
             -e MONGO_URI='${{ secrets.MONGO_URI }}' \
             -e DB_NAME='${{ secrets.DB_NAME }}' \
