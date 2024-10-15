@@ -2,7 +2,7 @@ name: Deploy backend
 
 on:
   push:
-    branch:
+    branches:
       - mern-ec2-docker
 
 jobs:
@@ -25,4 +25,9 @@ jobs:
       - name: Pull image from dockerhub
         run: docker pull saulgoodman13/node-backend:latest
       - name: Run docker container
-        run: docker run -p 4000:8000 --name nodejs-app-container -e MONGO_URI='${{ secrets.MONGO_URI }}' DB_NAME='${{ secrets.DB_NAME }}' JWT_TOKEN_SECRET='${{ secrets.JWT_TOKEN_SECRET }}' JWT_TOKEN_EXPIRY='${{ secrets.JWT_TOKEN_EXPIRY }}'  saulgoodman13/node-backend
+        run: docker run -p 4000:8000 --name nodejs-app-container \
+            -e MONGO_URI='${{ secrets.MONGO_URI }}' \
+            -e DB_NAME='${{ secrets.DB_NAME }}' \
+            -e JWT_TOKEN_SECRET='${{ secrets.JWT_TOKEN_SECRET }}' \
+            -e JWT_TOKEN_EXPIRY='${{ secrets.JWT_TOKEN_EXPIRY }}' \
+            saulgoodman13/node-backend
